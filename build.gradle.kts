@@ -59,4 +59,17 @@ tasks {
         ignoreFailures = false
         failFast = true
     }
+
+    javadoc {
+		(options as CoreJavadocOptions).addStringOption("Xdoclint:accessibility,html,syntax,reference", "-quiet")
+		options.encoding = "UTF-8"
+		shouldRunAfter(test)
+	}
+
+    jacocoTestReport {
+		reports {
+			xml.isEnabled = true
+			xml.destination = file("${buildDir}/reports/jacoco/report.xml")
+		}
+	}
 }
