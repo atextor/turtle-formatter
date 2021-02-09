@@ -248,13 +248,14 @@ public class TurtleFormatter implements Function<Model, String> {
         final State opened = writeDelimiter( "(", style.beforeOpeningParenthesis, style.afterOpeningParenthesis,
             continuationIndent( state.indentationLevel ), state );
         final java.util.List<RDFNode> elementList = resource.as( RDFList.class ).asJavaList();
-        final State elementsWritten = List.ofAll( elementList ).zipWithIndex().foldLeft( opened, ( currentState, indexedElement ) -> {
-            RDFNode element = indexedElement._1();
-            int index = indexedElement._2();
-            boolean firstElement = index == 0;
-            State spaceWritten = firstElement ? currentState : currentState.write( " " );
-            return writeRdfNode( element, spaceWritten );
-        } );
+        final State elementsWritten = List.ofAll( elementList ).zipWithIndex()
+            .foldLeft( opened, ( currentState, indexedElement ) -> {
+                RDFNode element = indexedElement._1();
+                int index = indexedElement._2();
+                boolean firstElement = index == 0;
+                State spaceWritten = firstElement ? currentState : currentState.write( " " );
+                return writeRdfNode( element, spaceWritten );
+            } );
 
         return writeDelimiter( ")", style.beforeClosingParenthesis, style.afterClosingParenthesis,
             continuationIndent( state.indentationLevel ), elementsWritten );
@@ -390,7 +391,7 @@ public class TurtleFormatter implements Function<Model, String> {
 
                 final boolean isAnonWithBrackets = object.isAnon()
                     && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                final State spaceWritten = ( !isAnonWithBrackets || isList( object, predicateWritten ) ) && !useComma ?
+                final State spaceWritten = !isAnonWithBrackets && !isList( object, predicateWritten ) && !useComma ?
                     predicateWritten.write( " " ) :
                     predicateWritten;
 
@@ -399,7 +400,9 @@ public class TurtleFormatter implements Function<Model, String> {
                     return writeComma( objectWritten );
                 }
 
-                final boolean omitSpaceBeforeDelimiter = object.isResource() && object.isAnon()
+                final boolean omitSpaceBeforeDelimiter = object.isResource()
+                    && object.isAnon()
+                    && !( isList( object, objectWritten ) && style.afterClosingParenthesis == FormattingStyle.GapStyle.NOTHING )
                     && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
                 if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 ) {
                     return writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();

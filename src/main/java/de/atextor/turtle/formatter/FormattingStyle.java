@@ -32,7 +32,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    GapStyle afterClosingParenthesis = GapStyle.NEWLINE;
+    GapStyle afterClosingParenthesis = GapStyle.NOTHING;
 
     @Builder.Default
     GapStyle afterClosingSquareBracket = GapStyle.SPACE;
