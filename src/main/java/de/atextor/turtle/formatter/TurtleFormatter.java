@@ -280,7 +280,9 @@ public class TurtleFormatter implements Function<Model, String> {
             return state.write( "a" );
         }
 
-        return state.write( state.prefixMapping.shortForm( resource.getURI() ) );
+        final String uri = resource.getURI();
+        final String shortForm = state.prefixMapping.shortForm( uri );
+        return state.write( shortForm.equals( uri ) ? "<" + uri + ">" : shortForm );
     }
 
     private State writeLiteral( final Literal literal, final State state ) {
