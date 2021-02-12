@@ -111,13 +111,26 @@ public class TurtleFormatter implements Function<Model, String> {
 
         final State namedResourcesWritten = statements
             .map( Statement::getSubject )
-            .foldLeft( prefixesWritten, ( state, resource ) ->
-                resource.isURIResource() ? writeSubject( resource, state.withIndentationLevel( 0 ) ) :
-                    writeAnonymousResource( resource, state.withIndentationLevel( 0 ) ) );
+            .foldLeft( prefixesWritten, ( state, resource ) -> {
+                if ( !resource.listProperties().hasNext() || state.visitedResources.contains( resource ) ) {
+                    return state;
+                }
+                if ( resource.isURIResource() ) {
+                    return writeSubject( resource, state.withIndentationLevel( 0 ) );
+                }
+                final State resourceWritten = writeAnonymousResource( resource, state.withIndentationLevel( 0 ) );
+                final boolean omitSpaceBeforeDelimiter = !state.identifiedAnonymousResources.keySet()
+                    .contains( resource );
+                return writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
+            } );
 
         final State finalState = List.ofAll( namedResourcesWritten.identifiedAnonymousResources.keySet() )
-            .foldLeft( namedResourcesWritten, ( state, resource ) ->
-                writeSubject( resource, state.withIndentationLevel( 0 ) ) );
+            .foldLeft( namedResourcesWritten, ( state, resource ) -> {
+                if ( !resource.listProperties().hasNext() ) {
+                    return state;
+                }
+                return writeSubject( resource, state.withIndentationLevel( 0 ) );
+            } );
 
         LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
             finalState.identifiedAnonymousResources.size() );
@@ -202,13 +215,12 @@ public class TurtleFormatter implements Function<Model, String> {
     }
 
     private State writeSemicolon( final State state, final boolean omitLineBreak,
-                                  final boolean omitSpaceBeforeSemicolon ) {
+                                  final boolean omitSpaceBeforeSemicolon, final String nextLineIndentation ) {
         final FormattingStyle.GapStyle beforeSemicolon = omitSpaceBeforeSemicolon ? FormattingStyle.GapStyle.NOTHING :
             style.beforeSemicolon;
         final FormattingStyle.GapStyle afterSemicolon = omitLineBreak ? FormattingStyle.GapStyle.NOTHING :
             style.afterSemicolon;
-        return writeDelimiter( ";", beforeSemicolon, afterSemicolon,
-            style.alignPredicates ? "" : indent( state.indentationLevel ), state );
+        return writeDelimiter( ";", beforeSemicolon, afterSemicolon, nextLineIndentation, state );
     }
 
     private State writeDot( final State state, final boolean omitSpaceBeforeDot ) {
@@ -250,10 +262,10 @@ public class TurtleFormatter implements Function<Model, String> {
         final java.util.List<RDFNode> elementList = resource.as( RDFList.class ).asJavaList();
         final State elementsWritten = List.ofAll( elementList ).zipWithIndex()
             .foldLeft( opened, ( currentState, indexedElement ) -> {
-                RDFNode element = indexedElement._1();
-                int index = indexedElement._2();
-                boolean firstElement = index == 0;
-                State spaceWritten = firstElement ? currentState : currentState.write( " " );
+                final RDFNode element = indexedElement._1();
+                final int index = indexedElement._2();
+                final boolean firstElement = index == 0;
+                final State spaceWritten = firstElement ? currentState : currentState.write( " " );
                 return writeRdfNode( element, spaceWritten );
             } );
 
@@ -267,12 +279,15 @@ public class TurtleFormatter implements Function<Model, String> {
         }
 
         if ( !state.model.contains( resource, null, (RDFNode) null ) ) {
-            return state.write( "[]" );
+            return state.write( " []" );
 
         }
+        if ( state.visitedResources.contains( resource ) ) {
+            return state;
+        }
         final State afterOpeningSquareBracket = writeOpeningSquareBracket( state );
-        final State afterContent = writeSubject( resource, afterOpeningSquareBracket ).removeIndentationLevel();
-        return writeClosingSquareBracket( afterContent );
+        final State afterContent = writeSubject( resource, afterOpeningSquareBracket );
+        return writeClosingSquareBracket( afterContent ).withVisitedResource( resource );
     }
 
     private State writeUriResource( final Resource resource, final State state ) {
@@ -370,11 +385,15 @@ public class TurtleFormatter implements Function<Model, String> {
         final boolean useComma = ( style.useCommaByDefault && !style.noCommaForPredicate.contains( predicate ) )
             || ( !style.useCommaByDefault && style.commaForPredicate.contains( predicate ) );
 
-        final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine ?
-            state.newLine().write( indent( state.indentationLevel ) ) : state;
+        final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine ? state.newLine() : state;
+
+        final State indentedPredicate =
+            firstProperty && ( style.firstPredicateInNewLine || ( subject
+                .isAnon() && !state.identifiedAnonymousResources.keySet().contains( subject ) ) ) ?
+                wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
 
         final State predicateAlignment = !firstProperty && style.alignPredicates ?
-            wrappedPredicate.write( " ".repeat( alignment ) ) : wrappedPredicate;
+            indentedPredicate.write( " ".repeat( alignment ) ) : indentedPredicate;
 
         final State predicateWrittenOnce = useComma ?
             writeProperty( predicate, predicateAlignment ).write( " " ) : predicateAlignment;
@@ -393,7 +412,8 @@ public class TurtleFormatter implements Function<Model, String> {
 
                 final boolean isAnonWithBrackets = object.isAnon()
                     && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                final State spaceWritten = !isAnonWithBrackets && !isList( object, predicateWritten ) && !useComma ?
+                final boolean isList = isList( object, predicateWritten );
+                final State spaceWritten = !isAnonWithBrackets && !isList && !useComma ?
                     predicateWritten.write( " " ) :
                     predicateWritten;
 
@@ -402,14 +422,21 @@ public class TurtleFormatter implements Function<Model, String> {
                     return writeComma( objectWritten );
                 }
 
-                final boolean omitSpaceBeforeDelimiter = object.isResource()
-                    && object.isAnon()
-                    && !( isList( object, objectWritten ) && style.afterClosingParenthesis == FormattingStyle.GapStyle.NOTHING )
-                    && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 ) {
+                final boolean listWritten = isList && style.afterClosingParenthesis == FormattingStyle.GapStyle.NOTHING;
+                final boolean omitSpaceBeforeDelimiter =
+                    object.isResource()
+                        && object.isAnon()
+                        && !listWritten
+                        && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
+                if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 &&
+                    ( currentState.identifiedAnonymousResources.keySet().contains( subject ) || !subject.isAnon() ) ) {
                     return writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();
                 }
-                return writeSemicolon( objectWritten, lastProperty && lastObject, omitSpaceBeforeDelimiter );
+                final String nextLineIndentation = style.alignPredicates || ( subject.isAnon() && lastProperty ) ? "" :
+                    indent( objectWritten.indentationLevel );
+                final State semicolonWritten = writeSemicolon( objectWritten, lastProperty && lastObject,
+                    omitSpaceBeforeDelimiter, nextLineIndentation );
+                return subject.isAnon() && lastProperty ? semicolonWritten.removeIndentationLevel() : semicolonWritten;
             } );
     }
 
