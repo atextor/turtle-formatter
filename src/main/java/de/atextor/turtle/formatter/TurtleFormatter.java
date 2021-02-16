@@ -387,10 +387,12 @@ public class TurtleFormatter implements Function<Model, String> {
 
         final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine ? state.newLine() : state;
 
-        final State indentedPredicate =
-            firstProperty && ( style.firstPredicateInNewLine || ( subject
-                .isAnon() && !state.identifiedAnonymousResources.keySet().contains( subject ) ) ) ?
-                wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
+        final State indentedPredicate = firstProperty && (
+            style.firstPredicateInNewLine || (
+                subject.isAnon() &&
+                    !state.identifiedAnonymousResources.keySet().contains( subject )
+                    && state.indentationLevel <= 1 ) ) ?
+            wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
 
         final State predicateAlignment = !firstProperty && style.alignPredicates ?
             indentedPredicate.write( " ".repeat( alignment ) ) : indentedPredicate;
