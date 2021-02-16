@@ -186,6 +186,32 @@ public class TurtleFormatterTest {
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
+    @Test
+    public void testTopLevelAnonymousNode() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            [
+              :foo 1 ;
+              :bar 2 ;
+              :baz 3 ;
+            ] .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final String ex = "http://example.com/";
+        final Property foo = ResourceFactory.createProperty( ex + "foo" );
+        final Property bar = ResourceFactory.createProperty( ex + "bar" );
+        final Property baz = ResourceFactory.createProperty( ex + "baz" );
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .predicateOrder( List.of( foo, bar, baz ) )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
