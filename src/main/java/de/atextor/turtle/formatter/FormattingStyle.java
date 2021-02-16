@@ -15,12 +15,35 @@ import org.apache.jena.vocabulary.SKOS;
 import org.apache.jena.vocabulary.XSD;
 
 import java.net.URI;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 @Builder
 public class FormattingStyle {
+    public static final KnownPrefix PREFIX_FMT = new KnownPrefix( "fmt", URI.create( FMT.NS ) );
+
+    public static final KnownPrefix PREFIX_RDF = new KnownPrefix( "rdf", URI.create( RDF.uri ) );
+
+    public static final KnownPrefix PREFIX_RDFS = new KnownPrefix( "rdfs", URI.create( RDFS.uri ) );
+
+    public static final KnownPrefix PREFIX_XSD = new KnownPrefix( "xsd", URI.create( XSD.NS ) );
+
+    public static final KnownPrefix PREFIX_OWL = new KnownPrefix( "owl", URI.create( OWL2.NS ) );
+
+    public static final KnownPrefix PREFIX_DCTERMS = new KnownPrefix( "dcterms", URI.create( DCTerms.NS ) );
+
+    public static final FormattingStyle DEFAULT = builder().build();
+
+    public static final KnownPrefix PREFIX_VANN = new KnownPrefix( "vann",
+        URI.create( "http://purl.org/vocab/vann/" ) );
+
+    public static final KnownPrefix PREFIX_SKOS = new KnownPrefix( "skos", URI.create( SKOS.getURI() ) );
+
+    public static final KnownPrefix PREFIX_EX = new KnownPrefix( "ex", URI.create( "http://example.org/" ) );
+
     @Builder.Default
     Set<KnownPrefix> knownPrefixes = Set.of(
         PREFIX_RDF,
@@ -78,6 +101,9 @@ public class FormattingStyle {
 
     @Builder.Default
     Charset charset = Charset.UTF_8;
+
+    @Builder.Default
+    NumberFormat doubleFormat = new DecimalFormat( "0.####E0" );
 
     @Builder.Default
     EndOfLineStyle endOfLine = EndOfLineStyle.LF;
@@ -176,6 +202,10 @@ public class FormattingStyle {
     @Builder.Default
     BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "_:gen" + integer;
 
+    public static Try<FormattingStyle> fromModel( final Model model ) {
+        return null;
+    }
+
     public enum Alignment {
         LEFT,
         OFF,
@@ -218,28 +248,5 @@ public class FormattingStyle {
         String prefix;
 
         URI iri;
-    }
-
-    public static final KnownPrefix PREFIX_FMT = new KnownPrefix( "fmt", URI.create( FMT.NS ) );
-
-    public static final KnownPrefix PREFIX_RDF = new KnownPrefix( "rdf", URI.create( RDF.uri ) );
-
-    public static final KnownPrefix PREFIX_RDFS = new KnownPrefix( "rdfs", URI.create( RDFS.uri ) );
-
-    public static final KnownPrefix PREFIX_XSD = new KnownPrefix( "xsd", URI.create( XSD.NS ) );
-
-    public static final KnownPrefix PREFIX_OWL = new KnownPrefix( "owl", URI.create( OWL2.NS ) );
-
-    public static final KnownPrefix PREFIX_DCTERMS = new KnownPrefix( "dcterms", URI.create( DCTerms.NS ) );
-
-    public static final KnownPrefix PREFIX_VANN = new KnownPrefix( "vann",
-        URI.create( "http://purl.org/vocab/vann/" ) );
-
-    public static final KnownPrefix PREFIX_SKOS = new KnownPrefix( "skos", URI.create( SKOS.getURI() ) );
-
-    public static final KnownPrefix PREFIX_EX = new KnownPrefix( "ex", URI.create( "http://example.org/" ) );
-
-    public static Try<FormattingStyle> fromModel( final Model model ) {
-        return null;
     }
 }

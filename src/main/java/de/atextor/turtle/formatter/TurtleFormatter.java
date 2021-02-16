@@ -314,7 +314,7 @@ public class TurtleFormatter implements Function<Model, String> {
             return state.write( literal.getValue().toString() );
         }
         if ( literal.getDatatypeURI().equals( XSD.xdouble.getURI() ) ) {
-            return state.write( "" + literal.getDouble() );
+            return state.write( style.doubleFormat.format( literal.getDouble() ) );
         }
         if ( literal.getDatatypeURI().equals( RDF.langString.getURI() ) ) {
             return state.write( "\"" + literal.getLexicalForm() + "\"@" + literal.getLanguage() );
