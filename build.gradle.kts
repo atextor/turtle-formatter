@@ -13,8 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.jena:jena:3.17.0")
-    implementation("org.apache.jena:jena-core:3.17.0")
+    implementation("org.apache.jena:apache-jena-libs:3.17.0")
     implementation("io.vavr:vavr:0.10.3")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
@@ -60,15 +59,15 @@ tasks {
     }
 
     javadoc {
-		(options as CoreJavadocOptions).addStringOption("Xdoclint:accessibility,html,syntax,reference", "-quiet")
-		options.encoding = "UTF-8"
-		shouldRunAfter(test)
-	}
+        (options as CoreJavadocOptions).addStringOption("Xdoclint:accessibility,html,syntax,reference", "-quiet")
+        options.encoding = "UTF-8"
+        shouldRunAfter(test)
+    }
 
     jacocoTestReport {
-		reports {
-			xml.isEnabled = true
-			xml.destination = file("${buildDir}/reports/jacoco/report.xml")
-		}
-	}
+        reports {
+            xml.isEnabled = true
+            xml.destination = file("${buildDir}/reports/jacoco/report.xml")
+        }
+    }
 }
