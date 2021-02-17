@@ -124,13 +124,15 @@ public class TurtleFormatter implements Function<Model, String> {
                 return writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
             } );
 
-        final State finalState = List.ofAll( namedResourcesWritten.identifiedAnonymousResources.keySet() )
+        final State allResourcesWritten = List.ofAll( namedResourcesWritten.identifiedAnonymousResources.keySet() )
             .foldLeft( namedResourcesWritten, ( state, resource ) -> {
                 if ( !resource.listProperties().hasNext() ) {
                     return state;
                 }
                 return writeSubject( resource, state.withIndentationLevel( 0 ) );
             } );
+
+        final State finalState = style.insertFinalNewline ? allResourcesWritten.newLine() : allResourcesWritten;
 
         LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
             finalState.identifiedAnonymousResources.size() );
