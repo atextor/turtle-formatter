@@ -292,14 +292,18 @@ public class TurtleFormatter implements Function<Model, String> {
         return writeClosingSquareBracket( afterContent ).withVisitedResource( resource );
     }
 
-    private State writeUriResource( final Resource resource, final State state ) {
+    private String uriResource( final Resource resource, final State state ) {
         if ( resource.getURI().equals( RDF.type.getURI() ) && style.useAForRdfType ) {
-            return state.write( "a" );
+            return "a";
         }
 
         final String uri = resource.getURI();
         final String shortForm = state.prefixMapping.shortForm( uri );
-        return state.write( shortForm.equals( uri ) ? "<" + uri + ">" : shortForm );
+        return shortForm.equals( uri ) ? "<" + uri + ">" : shortForm;
+    }
+
+    private State writeUriResource( final Resource resource, final State state ) {
+        return state.write( uriResource( resource, state ) );
     }
 
     private State writeLiteral( final Literal literal, final State state ) {
@@ -365,6 +369,9 @@ public class TurtleFormatter implements Function<Model, String> {
         final Set<Property> properties = Stream.ofAll( resource::listProperties )
             .map( Statement::getPredicate ).toSet();
 
+        final int maxPropertyWidth = properties.map( property ->
+            uriResource( property, state ) ).map( String::length ).max().getOrElse( 0 );
+
         return Stream
             .ofAll( properties )
             .sorted( state.predicateOrder )
@@ -374,13 +381,17 @@ public class TurtleFormatter implements Function<Model, String> {
                 final int index = indexedProperty._2();
                 final boolean firstProperty = index == 0;
                 final boolean lastProperty = index == properties.size() - 1;
+                final int propertyWidth = uriResource( property, currentState ).length();
+                final String gapAfterPredicate = style.alignObjects ?
+                    " ".repeat( maxPropertyWidth - propertyWidth + 1 ) : " ";
                 return writeProperty( resource, property, firstProperty, lastProperty, predicateAlignment,
-                    currentState );
+                    gapAfterPredicate, currentState );
             } );
     }
 
     private State writeProperty( final Resource subject, final Property predicate, final boolean firstProperty,
-                                 final boolean lastProperty, final int alignment, final State state ) {
+                                 final boolean lastProperty, final int alignment,
+                                 final String gapAfterPredicate, final State state ) {
         final Set<RDFNode> objects =
             Stream.ofAll( () -> subject.listProperties( predicate ) ).map( Statement::getObject ).toSet();
 
@@ -399,8 +410,8 @@ public class TurtleFormatter implements Function<Model, String> {
         final State predicateAlignment = !firstProperty && style.alignPredicates ?
             indentedPredicate.write( " ".repeat( alignment ) ) : indentedPredicate;
 
-        final State predicateWrittenOnce = useComma ?
-            writeProperty( predicate, predicateAlignment ).write( " " ) : predicateAlignment;
+        final State predicateWrittenOnce = useComma ? writeProperty( predicate, predicateAlignment )
+            .write( gapAfterPredicate ) : predicateAlignment;
 
         return Stream
             .ofAll( objects )
@@ -418,7 +429,7 @@ public class TurtleFormatter implements Function<Model, String> {
                     && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
                 final boolean isList = isList( object, predicateWritten );
                 final State spaceWritten = !isAnonWithBrackets && !isList && !useComma ?
-                    predicateWritten.write( " " ) :
+                    predicateWritten.write( gapAfterPredicate ) :
                     predicateWritten;
 
                 final State objectWritten = writeRdfNode( object, spaceWritten );
