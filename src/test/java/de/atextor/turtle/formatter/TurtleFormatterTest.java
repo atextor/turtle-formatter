@@ -22,6 +22,7 @@ public class TurtleFormatterTest {
             .knownPrefixes( Set.of() )
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.LEFT )
+            .insertFinalNewline( false )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -42,6 +43,7 @@ public class TurtleFormatterTest {
             .knownPrefixes( Set.of() )
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.OFF )
+            .insertFinalNewline( false )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -62,6 +64,7 @@ public class TurtleFormatterTest {
             .knownPrefixes( Set.of() )
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.RIGHT )
+            .insertFinalNewline( false )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -153,6 +156,53 @@ public class TurtleFormatterTest {
         final FormattingStyle style = FormattingStyle.builder()
             .knownPrefixes( Set.of() )
             .firstPredicateInNewLine( true )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testPredicateAndObjectAlignment() {
+        final String modelString = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/> .
+
+            :foo1 :bar       1 ;
+                  :bar234    2 ;
+                  :bar567890 3 .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .firstPredicateInNewLine( false )
+            .alignPredicates( true )
+            .alignObjects( true )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testPredicateAndObjectAlignmentWithFirstPredicateInNewLine() {
+        final String modelString = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/> .
+
+            :foo1
+              :bar       1 ;
+              :bar234    2 ;
+              :bar567890 3 .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .firstPredicateInNewLine( true )
+            .alignPredicates( true )
+            .alignObjects( true )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );

@@ -376,7 +376,7 @@ public class TurtleFormatter implements Function<Model, String> {
             .ofAll( properties )
             .sorted( state.predicateOrder )
             .zipWithIndex()
-            .foldLeft( stateWithSubject.addIndentationLevel(), ( currentState, indexedProperty ) -> {
+            .foldLeft( gapAfterSubject.addIndentationLevel(), ( currentState, indexedProperty ) -> {
                 final Property property = indexedProperty._1();
                 final int index = indexedProperty._2();
                 final boolean firstProperty = index == 0;
@@ -398,16 +398,18 @@ public class TurtleFormatter implements Function<Model, String> {
         final boolean useComma = ( style.useCommaByDefault && !style.noCommaForPredicate.contains( predicate ) )
             || ( !style.useCommaByDefault && style.commaForPredicate.contains( predicate ) );
 
-        final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine ? state.newLine() : state;
+        final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine && !subject.isAnon() ?
+            state.newLine() : state;
 
-        final State indentedPredicate = firstProperty && (
-            style.firstPredicateInNewLine || (
-                subject.isAnon() &&
-                    !state.identifiedAnonymousResources.keySet().contains( subject )
-                    && state.indentationLevel <= 1 ) ) ?
+        final boolean inBrackets = subject.isAnon() && !state.identifiedAnonymousResources.keySet().contains( subject );
+
+        final boolean shouldIndentFirstProperty = firstProperty && (
+            ( style.firstPredicateInNewLine && !inBrackets ) || ( inBrackets && state.indentationLevel <= 1 ) );
+        final boolean shouldIndentOtherProperty = !firstProperty && inBrackets;
+        final State indentedPredicate = shouldIndentFirstProperty || shouldIndentOtherProperty ?
             wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
 
-        final State predicateAlignment = !firstProperty && style.alignPredicates ?
+        final State predicateAlignment = !firstProperty && style.alignPredicates && !subject.isAnon() ?
             indentedPredicate.write( " ".repeat( alignment ) ) : indentedPredicate;
 
         final State predicateWrittenOnce = useComma ? writeProperty( predicate, predicateAlignment )
@@ -443,12 +445,13 @@ public class TurtleFormatter implements Function<Model, String> {
                         && object.isAnon()
                         && !listWritten
                         && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 &&
-                    ( currentState.identifiedAnonymousResources.keySet().contains( subject ) || !subject.isAnon() ) ) {
+                if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 && !inBrackets ) {
                     return writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();
                 }
-                final String nextLineIndentation = style.alignPredicates || ( subject.isAnon() && lastProperty ) ? "" :
-                    indent( objectWritten.indentationLevel );
+                final String nextLineIndentation =
+                    ( style.alignPredicates || ( subject.isAnon() ) )
+                        && !( !subject.isAnon() && !lastObject ) ? "" :
+                        indent( objectWritten.indentationLevel );
                 final State semicolonWritten = writeSemicolon( objectWritten, lastProperty && lastObject,
                     omitSpaceBeforeDelimiter, nextLineIndentation );
                 return subject.isAnon() && lastProperty ? semicolonWritten.removeIndentationLevel() : semicolonWritten;
