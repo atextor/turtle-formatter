@@ -27,7 +27,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<String> anyString() {
-        return Arbitraries.strings().ofMaxLength( 10 );
+        return Arbitraries.strings().ofMaxLength( 5 );
     }
 
     @Provide
@@ -59,7 +59,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<Literal> anyIntLiteral() {
-        return Arbitraries.integers()
+        return Arbitraries.integers().between( -5, 5 )
             .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDint ) );
     }
 
@@ -90,8 +90,10 @@ public class TurtleFormatterPropertyTest {
     @Provide
     Arbitrary<Literal> anyLiteral() {
         return Arbitraries
-            .oneOf( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(), anyDoubleLiteral(),
-                anyIntLiteral(), anyLongLiteral(), anyShortLiteral(), anyByteLiteral(), anyUnsignedByteLiteral() );
+            .oneOf( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(), anyDoubleLiteral()
+                ,
+                anyIntLiteral(), anyLongLiteral(), anyShortLiteral(), anyByteLiteral(), anyUnsignedByteLiteral()
+            );
     }
 
     @Provide
@@ -106,7 +108,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<String> anyUrn() {
-        return Arbitraries.integers().map( number -> "urn:ex:" + number );
+        return Arbitraries.integers().between( 0, 100 ).map( number -> "urn:ex:" + number );
     }
 
     @Provide
@@ -161,7 +163,7 @@ public class TurtleFormatterPropertyTest {
         } );
     }
 
-    @Property
+    @Property( tries = 50 )
     public void anyPrettyPrintedModelIsSyntacticallyValid( @ForAll( "anyModel" ) final Model model ) {
         final String result = formatter.apply( model );
         final Model newModel = ModelFactory.createDefaultModel();
