@@ -182,7 +182,7 @@ public class TurtleFormatter implements Function<Model, String> {
     private String indent( final int level ) {
         final String singleIndent = switch ( style.indentStyle ) {
             case SPACE -> " ".repeat( style.indentSize );
-            case TAB -> "\\t";
+            case TAB -> "\t";
         };
         return singleIndent.repeat( Math.max( level, 0 ) );
     }
@@ -190,7 +190,7 @@ public class TurtleFormatter implements Function<Model, String> {
     private String continuationIndent( final int level ) {
         final String continuation = switch ( style.indentStyle ) {
             case SPACE -> " ".repeat( style.continuationIndentSize );
-            case TAB -> "\\t".repeat( 2 );
+            case TAB -> "\t".repeat( 2 );
         };
         return indent( level - 1 ) + continuation;
     }
