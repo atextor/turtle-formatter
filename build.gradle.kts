@@ -23,6 +23,8 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("net.jqwik:jqwik:1.4.0")
 
+    testAnnotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.3.0")
+
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 }
 
