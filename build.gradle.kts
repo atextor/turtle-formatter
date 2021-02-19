@@ -17,6 +17,8 @@ dependencies {
     implementation("io.vavr:vavr:0.10.3")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
+    annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.3.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("net.jqwik:jqwik:1.3.10")
@@ -41,15 +43,21 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
     }
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(arrayOf("--release", "11"))
+}
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
         sourceCompatibility = "15"
+        targetCompatibility = "11"
     }
 
     compileTestJava {
         options.encoding = "UTF-8"
         sourceCompatibility = "15"
+        targetCompatibility = "11"
     }
 
     test {
