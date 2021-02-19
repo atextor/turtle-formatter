@@ -21,7 +21,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testImplementation("org.assertj:assertj-core:3.19.0")
-    testImplementation("net.jqwik:jqwik:1.3.10")
+    testImplementation("net.jqwik:jqwik:1.4.0")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 }
