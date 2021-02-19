@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         java: [ 15 ]
-        os: [ ubuntu, macos ]
+        os: [ ubuntu ]
     name: with Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - name: Check out repo
