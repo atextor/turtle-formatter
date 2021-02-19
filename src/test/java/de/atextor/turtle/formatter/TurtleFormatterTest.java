@@ -136,6 +136,28 @@ public class TurtleFormatterTest {
     }
 
     @Test
+    public void testIndentationWithTabs() {
+        final String modelString = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/> .
+
+            :foo1 :bar1 1 ;
+            \t:bar2 2 ;
+            \t:bar3 3 .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .firstPredicateInNewLine( false )
+            .indentStyle( FormattingStyle.IndentStyle.TAB )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
     public void testPredicateAlignmentWithFirstPredicateInNewLine() {
         final String modelString = """
             @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
