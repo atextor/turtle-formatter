@@ -3,6 +3,7 @@ package de.atextor.turtle.formatter;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Combinators;
+import net.jqwik.api.Disabled;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
@@ -22,6 +23,7 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+@Disabled( "current implementation requires too much heap space" )
 public class TurtleFormatterPropertyTest {
     private final TurtleFormatter formatter = new TurtleFormatter( FormattingStyle.builder().build() );
 
