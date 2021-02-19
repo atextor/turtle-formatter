@@ -184,7 +184,7 @@ public class TurtleFormatter implements Function<Model, String> {
             case SPACE -> " ".repeat( style.indentSize );
             case TAB -> "\\t";
         };
-        return singleIndent.repeat( level );
+        return singleIndent.repeat( Math.max( level, 0 ) );
     }
 
     private String continuationIndent( final int level ) {
