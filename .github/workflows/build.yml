@@ -1,4 +1,4 @@
-name: Main build
+name: build
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         java: [ 15 ]
-        os: [ ubuntu ]
+        os: [ ubuntu, macos ]
     name: with Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - name: Check out repo
