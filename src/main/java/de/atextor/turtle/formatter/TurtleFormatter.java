@@ -24,17 +24,27 @@ import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class TurtleFormatter implements Function<Model, String> {
+public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
+
     private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
+
+    public static final String OUTPUT_ERROR_MESSAGE = "Could not write to stream";
 
     private final FormattingStyle style;
 
     private final String beforeDot;
 
     private final String endOfLine;
+
+    private final java.nio.charset.Charset encoding;
 
     private final Comparator<Tuple2<String, String>> prefixOrder;
 
@@ -55,6 +65,13 @@ public class TurtleFormatter implements Function<Model, String> {
             case NEWLINE -> endOfLine;
         };
 
+        encoding = switch ( style.charset ) {
+            case UTF_8, UTF_8_BOM -> StandardCharsets.UTF_8;
+            case LATIN1 -> StandardCharsets.ISO_8859_1;
+            case UTF_16_BE -> StandardCharsets.UTF_16BE;
+            case UTF_16_LE -> StandardCharsets.UTF_16LE;
+        };
+
         prefixOrder = Comparator.<Tuple2<String, String>>comparingInt( entry ->
             style.prefixOrder.contains( entry._1() ) ?
                 style.prefixOrder.indexOf( entry._1() ) :
@@ -72,13 +89,31 @@ public class TurtleFormatter implements Function<Model, String> {
         return List.ofAll( model.listStatements().toList() );
     }
 
-    private static List<Statement> statements( final Model model, final Resource subject, final Property predicate,
-                                               final RDFNode object ) {
-        return List.ofAll( model.listStatements( subject, predicate, object ).toList() );
+    private static List<Statement> statements( final Model model, final Property predicate, final RDFNode object ) {
+        return List.ofAll( model.listStatements( null, predicate, object ).toList() );
     }
 
     @Override
     public String apply( final Model model ) {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        accept( model, outputStream );
+        return outputStream.toString();
+    }
+
+    private void writeByteOrderMark( final OutputStream outputStream ) {
+        try {
+            outputStream.write( new byte[]{ (byte) 0xEF, (byte) 0xBB, (byte) 0xBF } );
+        } catch ( final IOException exception ) {
+            LOG.error( OUTPUT_ERROR_MESSAGE, exception );
+        }
+    }
+
+    @Override
+    public void accept( final Model model, final OutputStream outputStream ) {
+        if ( style.charset == FormattingStyle.Charset.UTF_8_BOM ) {
+            writeByteOrderMark( outputStream );
+        }
+
         final PrefixMapping prefixMapping = buildPrefixMapping( model );
 
         final Comparator<Property> predicateOrder = Comparator.<Property>comparingInt( property ->
@@ -91,7 +126,7 @@ public class TurtleFormatter implements Function<Model, String> {
             .ofAll( anonymousResourcesThatNeedAnId( model ) )
             .zipWithIndex()
             .map( entry -> new Tuple2<>( entry._1(), style.anonymousNodeIdGenerator.apply( entry._1(), entry._2() ) ) )
-            .foldLeft( new State( model, predicateOrder, prefixMapping ), ( state, entry ) ->
+            .foldLeft( new State( outputStream, model, predicateOrder, prefixMapping ), ( state, entry ) ->
                 state.withIdentifiedAnonymousResource( entry._1(), entry._2() ) );
 
         final State prefixesWritten = writePrefixes( initialState );
@@ -101,7 +136,7 @@ public class TurtleFormatter implements Function<Model, String> {
                 prefixMapping.shortForm( statement.getSubject().getURI() ) : statement.getSubject().toString() );
 
         final List<Statement> wellKnownSubjects = List.ofAll( style.subjectOrder ).flatMap( subjectType ->
-            statements( model, null, RDF.type, subjectType ).sorted( subjectComparator ) );
+            statements( model, RDF.type, subjectType ).sorted( subjectComparator ) );
         final List<Statement> otherSubjects = statements( model )
             .filter( statement -> !statement.getPredicate().equals( RDF.type ) )
             .sorted( subjectComparator );
@@ -136,8 +171,6 @@ public class TurtleFormatter implements Function<Model, String> {
 
         LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
             finalState.identifiedAnonymousResources.size() );
-
-        return finalState.print();
     }
 
     /**
@@ -152,7 +185,7 @@ public class TurtleFormatter implements Function<Model, String> {
             .filter( RDFNode::isResource )
             .map( RDFNode::asResource )
             .filter( RDFNode::isAnon )
-            .filter( object -> statements( model, null, null, object ).toList().size() > 1 )
+            .filter( object -> statements( model, null, object ).toList().size() > 1 )
             .toSet();
     }
 
@@ -462,7 +495,7 @@ public class TurtleFormatter implements Function<Model, String> {
     @With
     @AllArgsConstructor
     private class State {
-        StringBuffer buffer;
+        OutputStream outputStream;
 
         Model model;
 
@@ -478,9 +511,9 @@ public class TurtleFormatter implements Function<Model, String> {
 
         int alignment;
 
-        public State( final Model model, final Comparator<Property> predicateOrder,
+        public State( final OutputStream outputStream, final Model model, final Comparator<Property> predicateOrder,
                       final PrefixMapping prefixMapping ) {
-            this( new StringBuffer(), model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0 );
+            this( outputStream, model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0 );
         }
 
         public State withIdentifiedAnonymousResource( final Resource anonymousResource, final String id ) {
@@ -504,14 +537,12 @@ public class TurtleFormatter implements Function<Model, String> {
         }
 
         public State write( final String content ) {
-            // Interface pretends to use immutable data structures, while the implementation actually reuses the
-            // same StringBuffer
-            buffer.append( content );
+            try {
+                outputStream.write( content.getBytes( encoding ) );
+            } catch ( final IOException e ) {
+                LOG.error( OUTPUT_ERROR_MESSAGE, e );
+            }
             return withAlignment( alignment + content.length() );
-        }
-
-        public String print() {
-            return buffer.toString();
         }
     }
 }
