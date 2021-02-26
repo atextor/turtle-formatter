@@ -1,9 +1,7 @@
 package de.atextor.turtle.formatter;
 
-import io.vavr.control.Try;
 import lombok.Builder;
 import lombok.Value;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -201,10 +199,6 @@ public class FormattingStyle {
 
     @Builder.Default
     BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "_:gen" + integer;
-
-    public static Try<FormattingStyle> fromModel( final Model model ) {
-        return null;
-    }
 
     public enum Alignment {
         LEFT,
