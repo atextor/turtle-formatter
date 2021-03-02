@@ -16,7 +16,7 @@ jobs:
       matrix:
         java: [ 15 ]
         os: [ ubuntu, macos ]
-    name: with Java ${{ matrix.java }} on ${{ matrix.os }}
+    name: With Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v2
@@ -36,9 +36,9 @@ jobs:
         run: ./gradlew clean build jacocoTestReport --stacktrace
 
   buildDone:
-    name: buildOk
+    name: Build Ok
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: buildOk
+      - name: Build Ok
         run: echo 'all builds passed'
