@@ -8,6 +8,10 @@
 It takes as input a formatting style and an [Apache Jena](https://jena.apache.org) Model and
 produces as output a pretty-printed RDF/Turtle document.
 
+## Current Status
+
+The library is feature-complete.
+
 ## Usage
 
 ```java
