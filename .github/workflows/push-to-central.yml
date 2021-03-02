@@ -1,4 +1,4 @@
-name: release
+name: push-to-central
 
 on:
   release:
