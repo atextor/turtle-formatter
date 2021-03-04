@@ -52,7 +52,7 @@ style hardcoded in the respective library. So while Apache Jena and for example
 [libraptor2](http://librdf.org/raptor/) both write valid RDF/Turtle, the files are formatted
 differently. You would not want the code of a project formatted differently in different files,
 would you?
-**turtle-formatter** addreses these problems by taking care of serialization order and providing a
+**turtle-formatter** addresses these problems by taking care of serialization order and providing a
 way to customize the formatting style.
 
 ## Usage
@@ -111,19 +111,6 @@ The following options can be set on the FormattingStyle builder:
 <tr>
 <td>
 
-`indentStyle`
-
-</td>
-<td>
-
-`SPACE` or `TAB`. Note that when choosing `TAB`, `alignPredicates` and `alignObjects` must be `false`.
-
-</td>
-<td>SPACE</td>
-</tr>
-<tr>
-<td>
-
 `alignPrefixes`
 
 </td>
@@ -147,34 +134,149 @@ The following options can be set on the FormattingStyle builder:
 <td>
 
 `alignPredicates`
+`firstPredicateInNewLine`
 
 </td>
 <td>
 Boolean. Example:
 
 ```turtle
-# alignPredicates true
+# firstPredicateInNewLine false / alignPredicates true
 :test a rdf:Resource ;
       :blorb "blorb" ;
       :floop "floop" .
 
-# alignPredicates false and firstPredicateInNewLine true
-:test
-    a rdf:Resource ;
+# firstPredicateInNewLine false / alignPredicates false
+:test a rdf:Resource ;
     :blorb "blorb" ;
     :floop "floop" .
 
-# alignPredicates false and firstPredicateInNewLine false
-:test a rdf:Resource ;
+# firstPredicateInNewLine true / alignPredicates does not matter
+:test
+    a rdf:Resource ;
     :blorb "blorb" ;
     :floop "floop" .
 ```
 
 </td>
-<td>false</td>
+<td>false (for both)</td>
+</tr>
+
+<tr>
+<td>
+
+`charset`\*
+
+</td>
+<td>
+
+One of `LATIN1`, `UTF_16_BE`, `UTF_16_LE`, `UTF_8`, `UTF_8_BOM`
+
+</td>
+<td>
+
+`UTF_8`
+
+</td>
+</tr>
+<tr>
+<td>
+
+`doubleFormat`
+
+</td>
+<td>
+
+A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/NumberFormat.html) that describes how `xsd:double` literals are formatted
+
+</td>
+<td>
+
+`0.####E0`
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`endOfLine`\*
+
+</td>
+<td>
+
+One of `LF`, `CR`, `CRLF`. If unsure, please see [Newline](https://en.wikipedia.org/wiki/Newline)
+
+</td>
+<td>
+
+`LF`
+
+</td>
+</tr>
+<tr>
+<td>
+
+`indentStyle`\*
+
+</td>
+<td>
+
+`SPACE` or `TAB`. Note that when choosing `TAB`, `alignPredicates` and `alignObjects` are
+automatically treated as `false`.
+
+</td>
+<td>
+
+`SPACE`
+
+</td>
+</tr>
+<tr>
+<td>
+
+`useAForRdfType`
+
+</td>
+<td>
+
+Boolean. Determines whether `rdf:type` is written as `a` or as `rdf:type`.
+
+</td>
+<td>
+true
+</td>
+</tr>
+
+<tr>
+<td>
+
+`useCommaByDefault`
+
+</td>
+<td>
+
+Boolean. Determines whether to use commas for identical predicates. Example:
+```turtle
+# useCommaByDefault false
+:test a rdf:Resource ;
+    :blorb "someBlorb" ;
+    :blorb "anotherBlorb" .
+
+# useCommaByDefault true
+:test a rdf:Resource ;
+    :blorb "someBlorb", "anotherBlorb" .
+```
+
+</td>
+<td>
+false
+</td>
 </tr>
 
 </table>
+
+\* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
 *The remaining missing documentation will be added soon*
 
