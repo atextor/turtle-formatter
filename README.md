@@ -148,18 +148,47 @@ Boolean. Example:
 
 # firstPredicateInNewLine false / alignPredicates false
 :test a rdf:Resource ;
-    :blorb "blorb" ;
-    :floop "floop" .
+  :blorb "blorb" ;
+  :floop "floop" .
 
 # firstPredicateInNewLine true / alignPredicates does not matter
 :test
-    a rdf:Resource ;
-    :blorb "blorb" ;
-    :floop "floop" .
+  a rdf:Resource ;
+  :blorb "blorb" ;
+  :floop "floop" .
 ```
 
 </td>
 <td>false (for both)</td>
+</tr>
+
+<tr>
+<td>
+
+`alignObjects`
+
+</td>
+<td>
+
+Boolean. Example:
+```turtle
+# alignObjects true
+:test
+  a           rdf:Resource ;
+  :blorb      "blorb" ;
+  :floopfloop "floopfloop" .
+
+# alignObjects false
+:test
+  a rdf:Resource ;
+  :blorb "blorb" ;
+  :floopfloop "floopfloop" .
+```
+
+</td>
+<td>
+false
+</td>
 </tr>
 
 <tr>
@@ -232,6 +261,37 @@ automatically treated as `false`.
 
 </td>
 </tr>
+
+<tr>
+<td>
+
+`indentSize`\*
+
+</td>
+<td>
+
+Integer. When using `indentStyle` `SPACE`, defines the indentation size.
+
+</td>
+<td>
+2
+</td>
+</tr>
+
+<tr>
+<td>
+
+`insertFinalNewLine`\*
+
+</td>
+<td>
+Boolean. Determines whether there is a line break after the last line
+</td>
+<td>
+true
+</td>
+</tr>
+
 <tr>
 <td>
 
@@ -260,17 +320,98 @@ Boolean. Determines whether to use commas for identical predicates. Example:
 ```turtle
 # useCommaByDefault false
 :test a rdf:Resource ;
-    :blorb "someBlorb" ;
-    :blorb "anotherBlorb" .
+  :blorb "someBlorb" ;
+  :blorb "anotherBlorb" .
 
 # useCommaByDefault true
 :test a rdf:Resource ;
-    :blorb "someBlorb", "anotherBlorb" .
+  :blorb "someBlorb", "anotherBlorb" .
 ```
 
 </td>
 <td>
 false
+</td>
+</tr>
+
+<tr>
+<td>
+
+`commaForPredicate`
+
+</td>
+<td>
+
+A set of predicates that, when used multiple times, are separated by commas, even when
+`useCommaByDefault` is `false`. Example:
+
+```turtle
+# useCommaByDefault false, commaForPredicate contains 'rdf:type',
+# firstPredicateInNewLine true
+:test a ex:something, owl:NamedIndividual ;
+  :blorb "someBlorb" ;
+  :blorb "anotherBlorb" .
+
+# useCommaByDefault false, commaForPredicate is empty,
+# firstPredicateInNewLine false
+:test
+  a ex:something ;
+  a owl:NamedIndividual ;
+  :blorb "someBlorb" ;
+  :blorb "anotherBlorb" .
+```
+
+</td>
+<td>
+
+Set.of(`rdf:type`)
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`noCommaForPredicate`
+
+</td>
+<td>
+
+Analogous to `commaForPredicate`: A set of predicates that, when used multiple times, are _not_
+separated by commas, even when `useCommaByDefault` is `true`.
+
+</td>
+<td>
+Empty
+</td>
+</tr>
+
+<tr>
+<td>
+
+`prefixOrder`
+
+</td>
+<td>
+
+A list of namespace prefixes that defines the order of `@prefix` directives. Namespaces from the
+list always appear first (in this order), every other prefix will appear afterwards,
+lexicographically sorted. Example:
+
+```turtle
+# prefixOrder contains "rdf" and "owl" (in this order), so they
+# will appear in this order at the top (when the model contains
+# them!), followed by all other namespaces
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix example: <http://example.com/> .
+```
+
+</td>
+<td>
+
+List.of(`rdf` `rdfs` `xsd` `owl`)
+
 </td>
 </tr>
 
