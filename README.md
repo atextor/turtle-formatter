@@ -134,24 +134,28 @@ The following options can be set on the FormattingStyle builder:
 <td>
 
 `alignPredicates`
-`firstPredicateInNewLine`
+`firstPredicate`-
+`InNewLine`
 
 </td>
 <td>
 Boolean. Example:
 
 ```turtle
-# firstPredicateInNewLine false / alignPredicates true
+# firstPredicateInNewLine false
+# alignPredicates true
 :test a rdf:Resource ;
       :blorb "blorb" ;
       :floop "floop" .
 
-# firstPredicateInNewLine false / alignPredicates false
+# firstPredicateInNewLine false 
+# alignPredicates false
 :test a rdf:Resource ;
   :blorb "blorb" ;
   :floop "floop" .
 
-# firstPredicateInNewLine true / alignPredicates does not matter
+# firstPredicateInNewLine true 
+# alignPredicates does not matter
 :test
   a rdf:Resource ;
   :blorb "blorb" ;
@@ -346,8 +350,8 @@ A set of predicates that, when used multiple times, are separated by commas, eve
 `useCommaByDefault` is `false`. Example:
 
 ```turtle
-# useCommaByDefault false, commaForPredicate contains 'rdf:type',
-# firstPredicateInNewLine true
+# useCommaByDefault false, commaForPredicate contains
+# 'rdf:type', firstPredicateInNewLine true
 :test a ex:something, owl:NamedIndividual ;
   :blorb "someBlorb" ;
   :blorb "anotherBlorb" .
@@ -399,9 +403,9 @@ list always appear first (in this order), every other prefix will appear afterwa
 lexicographically sorted. Example:
 
 ```turtle
-# prefixOrder contains "rdf" and "owl" (in this order), so they
-# will appear in this order at the top (when the model contains
-# them!), followed by all other namespaces
+# prefixOrder contains "rdf" and "owl" (in this order), so
+# they will appear in this order at the top (when the model
+# contains them!), followed by all other namespaces
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix example: <http://example.com/> .
@@ -415,11 +419,140 @@ List.of(`rdf` `rdfs` `xsd` `owl`)
 </td>
 </tr>
 
+<tr>
+<td>
+
+`subjectOrder`
+
+</td>
+<td>
+
+A list of resources that determines the order in which subjects appear. For a subject `s` there must
+exist a statement `s rdf:type t` in the model and an entry for `t` in the `subjectOrder` list for
+the element to be considered in the ordering, i.e., when `subjectOrder` contains `:Foo` and `:Bar`
+in that order, the pretty-printed model will show first all `:Foo`s, then all `:Bar`s, then
+everything else lexicographically sorted.
+
+</td>
+<td>
+
+List.of(`owl:Ontology` `owl:Class` `owl:ObjectProperty` `owl:DatatypeProperty`
+`owl:AnnotationProperty` `owl:NamedIndividual` `owl:AllDifferent` `owl:Axiom`)
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`predicateOrder`
+
+</td>
+<td>
+
+A list of properties that determine the order in which predicates appear for a subject. First all
+properties that are in the list are shown in that order, then everything else lexicographically
+sorted. For example, when `predicateOrder` contains `:z`, `:y`, `:x` in that order and the subject
+has statements for the properties `:a`, `:x` and `:z`:
+
+```turtle
+:test
+  :z "z" ;
+  :x "x" ; 
+  :a "a" .
+```
+
+</td>
+<td>
+
+List.of(`rdf:type`)
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`objectOrder`
+
+</td>
+<td>
+
+A list of RDFNodes (i.e. resources or literals) that determine the order in which objects appear for
+a predicate, when there are multiple statements with the same subject and the same predicate. First
+all objects that are in the list are shown in that order, then everything else lexicographically
+sorted. For example, when `objectOrder` contains `:Foo` and `:Bar` in that order:
+
+```turtle
+:test a :Foo, :Bar .
+```
+
+</td>
+<td>
+
+List.of(`owl:NamedIndividual` `owl:ObjectProperty` `owl:DatatypeProperty` `owl:AnnotationProperty` `owl:FunctionalProperty` `owl:InverseFunctionalProperty` `owl:TransitiveProperty` `owl:SymmetricProperty` `owl:AsymmetricProperty` `owl:ReflexiveProperty` `owl:IrreflexiveProperty`)
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`anonymousNode`-
+`IdGenerator`
+
+</td>
+<td>
+
+A `BiFunction` that takes a resource (blank node) and an integer (counter) and determines the name
+for a blank node in the formatted output, if it needs to be locally named. Consider the following
+model:
+
+```turtle
+:test :foo _:b0 .
+:test2 :bar _:b0 .
+```
+
+There is no way to serialize this model in RDF/Turtle while using the inline blank node syntax `[ ]`
+for the anonymous node `_:b0`. In this case, the anonymousNodeIdGenerator is called to determine
+the name of the blank node in the output.
+
+</td>
+<td>
+
+`(r, i) -> "_:gen" + i`
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+{`after`,`before`}
+{`Opening`, `Closing`}
+{`Parenthesis`, `SquareBrackets`},
+
+{`after`,`before`}
+{`Comma`, `Dot`, `Semicolon` }
+
+</td>
+<td>
+
+`NEWLINE`, `NOTHING` or `SPACE`. Various options for formatting gaps and line breaks. It is not
+recommended to change those, as the default style represents the commonly accepted best practices
+for formatting turtle already.
+
+</td>
+<td>
+
+Varied
+
+</td>
+</tr>
+
 </table>
 
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
-
-*The remaining missing documentation will be added soon*
 
 ## Contact
 
