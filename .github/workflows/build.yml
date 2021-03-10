@@ -42,7 +42,6 @@ jobs:
         with:
           name: codecov-umbrella
           env_vars: OS,USED_JAVA
-          verbose: true
 
   buildDone:
     name: Build Ok
