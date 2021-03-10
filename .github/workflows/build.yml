@@ -34,6 +34,12 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-
       - name: Gradle build
         run: ./gradlew clean build jacocoTestReport --stacktrace
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          directory: ./build/test-results/test/
+          name: codecov-umbrella
+          verbose: true
 
   buildDone:
     name: Build Ok
