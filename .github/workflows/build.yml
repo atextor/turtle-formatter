@@ -16,6 +16,9 @@ jobs:
       matrix:
         java: [ 15 ]
         os: [ ubuntu, macos ]
+    env:
+      OS: ${{ matrix.os }}
+      USED_JAVA: ${{ matrix.java }}
     name: With Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - name: Check out repo
@@ -38,6 +41,7 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           name: codecov-umbrella
+          env_vars: OS,USED_JAVA
           verbose: true
 
   buildDone:
