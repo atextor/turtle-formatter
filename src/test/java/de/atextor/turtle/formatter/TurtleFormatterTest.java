@@ -284,6 +284,19 @@ public class TurtleFormatterTest {
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
+    @Test
+    public void testFormatting() {
+        final Model model = ModelFactory.createDefaultModel();
+        model.read( "http://purl.org/atextor/ontology/turtle-formatting", "TURTLE" );
+        final FormattingStyle style = FormattingStyle.builder().build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final Model resultModel = modelFromString( result );
+        assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
