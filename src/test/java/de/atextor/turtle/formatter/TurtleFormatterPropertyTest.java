@@ -23,8 +23,6 @@ import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TurtleFormatterPropertyTest {
-    private final TurtleFormatter formatter = new TurtleFormatter( FormattingStyle.builder().build() );
-
     @Provide
     Arbitrary<String> anyString() {
         return Arbitraries.strings().ofMaxLength( 5 );
@@ -135,6 +133,23 @@ public class TurtleFormatterPropertyTest {
         return anyStatement( model ).list().ofMaxSize( 5 );
     }
 
+    // Creates styles for some of the options that control the actual formatting and are difficult to test
+    // in isolation.
+    @Provide
+    Arbitrary<FormattingStyle> anyStyle() {
+        final Arbitrary<Boolean> onOff = Arbitraries.of( true, false );
+
+        return Combinators.combine( onOff, onOff, onOff, onOff, onOff )
+            .as( ( firstPredicateInNewLine, useAForRdfType, useComma, alignPredicates, alignObjects ) ->
+                FormattingStyle.builder()
+                    .firstPredicateInNewLine( firstPredicateInNewLine )
+                    .useAForRdfType( useAForRdfType )
+                    .useCommaByDefault( useComma )
+                    .alignPredicates( alignPredicates )
+                    .alignObjects( alignObjects )
+                    .build() );
+    }
+
     @Provide
     Arbitrary<Model> anyModel() {
         final Model model = ModelFactory.createDefaultModel();
@@ -145,7 +160,9 @@ public class TurtleFormatterPropertyTest {
     }
 
     @Property( tries = 300 )
-    public void anyPrettyPrintedModelIsSyntacticallyValid( @ForAll( "anyModel" ) final Model model ) {
+    public void anyPrettyPrintedModelIsSyntacticallyValid( @ForAll( "anyModel" ) final Model model,
+                                                           @ForAll( "anyStyle" ) final FormattingStyle style ) {
+        final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
         final Model newModel = ModelFactory.createDefaultModel();
         try {
