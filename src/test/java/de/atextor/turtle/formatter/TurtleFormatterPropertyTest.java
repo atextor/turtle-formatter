@@ -3,7 +3,6 @@ package de.atextor.turtle.formatter;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Combinators;
-import net.jqwik.api.Disabled;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
@@ -23,7 +22,6 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-@Disabled( "current implementation requires too much heap space" )
 public class TurtleFormatterPropertyTest {
     private final TurtleFormatter formatter = new TurtleFormatter( FormattingStyle.builder().build() );
 
@@ -53,49 +51,30 @@ public class TurtleFormatterPropertyTest {
             .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDfloat ) );
     }
 
+
     @Provide
     Arbitrary<Literal> anyDoubleLiteral() {
         return Arbitraries.doubles()
             .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDdouble ) );
     }
 
+    // Providing only one for each of the integer number types is sufficient for testing the formatter
+    // as there is no variation in their serialzition, but greatly reduces the test space
     @Provide
-    Arbitrary<Literal> anyIntLiteral() {
-        return Arbitraries.integers().between( -5, 5 )
-            .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDint ) );
-    }
-
-    @Provide
-    Arbitrary<Literal> anyLongLiteral() {
-        return Arbitraries.longs()
-            .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDlong ) );
-    }
-
-    @Provide
-    Arbitrary<Literal> anyShortLiteral() {
-        return Arbitraries.shorts()
-            .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDshort ) );
-    }
-
-    @Provide
-    Arbitrary<Literal> anyByteLiteral() {
-        return Arbitraries.bytes()
-            .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDbyte ) );
-    }
-
-    @Provide
-    Arbitrary<Literal> anyUnsignedByteLiteral() {
-        return Arbitraries.integers().between( 0, 255 )
-            .map( value -> ResourceFactory.createTypedLiteral( value.toString(), XSDDatatype.XSDunsignedByte ) );
+    Arbitrary<Literal> anyIntegerNumberLiteral() {
+        return Arbitraries.of(
+            ResourceFactory.createTypedLiteral( "1", XSDDatatype.XSDint ),
+            ResourceFactory.createTypedLiteral( "2", XSDDatatype.XSDlong ),
+            ResourceFactory.createTypedLiteral( "3", XSDDatatype.XSDbyte ),
+            ResourceFactory.createTypedLiteral( "4", XSDDatatype.XSDbyte ),
+            ResourceFactory.createTypedLiteral( "5", XSDDatatype.XSDunsignedByte )
+        );
     }
 
     @Provide
     Arbitrary<Literal> anyLiteral() {
-        return Arbitraries
-            .oneOf( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(), anyDoubleLiteral()
-                ,
-                anyIntLiteral(), anyLongLiteral(), anyShortLiteral(), anyByteLiteral(), anyUnsignedByteLiteral()
-            );
+        return Arbitraries.oneOf( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(), anyDoubleLiteral(),
+            anyIntegerNumberLiteral() );
     }
 
     @Provide
@@ -105,12 +84,12 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<String> anyUrl() {
-        return Arbitraries.integers().between( 0, 100 ).map( number -> "http://example.com/" + number );
+        return Arbitraries.integers().between( 0, 10 ).map( number -> "http://example.com/" + number );
     }
 
     @Provide
     Arbitrary<String> anyUrn() {
-        return Arbitraries.integers().between( 0, 100 ).map( number -> "urn:ex:" + number );
+        return Arbitraries.integers().between( 0, 10 ).map( number -> "urn:ex:" + number );
     }
 
     @Provide
@@ -142,7 +121,7 @@ public class TurtleFormatterPropertyTest {
     @Provide
     Arbitrary<RDFNode> anyList( final Model model ) {
         final Supplier<Arbitrary<? extends RDFNode>> elements = () -> anyRdfNode( model );
-        return Arbitraries.lazyOf( elements, elements ).list().ofMaxSize( 10 )
+        return Arbitraries.lazyOf( elements, elements ).list().ofMaxSize( 3 )
             .map( list -> model.createList( list.iterator() ) );
     }
 
@@ -165,7 +144,7 @@ public class TurtleFormatterPropertyTest {
         } );
     }
 
-    @Property( tries = 50 )
+    @Property( tries = 300 )
     public void anyPrettyPrintedModelIsSyntacticallyValid( @ForAll( "anyModel" ) final Model model ) {
         final String result = formatter.apply( model );
         final Model newModel = ModelFactory.createDefaultModel();
