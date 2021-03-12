@@ -7,6 +7,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -282,6 +283,18 @@ public class TurtleFormatterTest {
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testUtf8BomCharset() {
+        final Model model = prefixModel();
+        final FormattingStyle style = FormattingStyle.builder()
+            .charset( FormattingStyle.Charset.UTF_8_BOM )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        formatter.accept( model, outputStream );
+        assertThat( outputStream.toByteArray() ).startsWith( (byte) 0xEF, (byte) 0xBB, (byte) 0xBF );
     }
 
     @Test
