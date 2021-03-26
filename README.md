@@ -64,13 +64,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.0.0'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.0.1'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.0.0")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.0.1")`
 
 ### Calling the formatter
 
