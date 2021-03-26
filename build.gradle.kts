@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.jena:apache-jena-libs:3.17.0")
+    implementation("org.apache.jena:jena-core:3.17.0")
     implementation("io.vavr:vavr:0.10.3")
     implementation("org.slf4j:slf4j-api:1.7.30")
 
