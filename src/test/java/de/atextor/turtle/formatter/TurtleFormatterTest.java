@@ -300,7 +300,8 @@ public class TurtleFormatterTest {
     @Test
     public void testFormatting() {
         final Model model = ModelFactory.createDefaultModel();
-        model.read( "http://purl.org/atextor/ontology/turtle-formatting", "TURTLE" );
+        model
+            .read( "https://raw.githubusercontent.com/atextor/turtle-formatting/main/turtle-formatting.ttl", "TURTLE" );
         final FormattingStyle style = FormattingStyle.builder().build();
 
         final TurtleFormatter formatter = new TurtleFormatter( style );
