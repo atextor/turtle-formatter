@@ -14,7 +14,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.RDFLanguages;
 
 import java.io.StringReader;
 import java.util.List;
@@ -166,7 +165,7 @@ public class TurtleFormatterPropertyTest {
         final String result = formatter.apply( model );
         final Model newModel = ModelFactory.createDefaultModel();
         try {
-            newModel.read( new StringReader( result ), "", RDFLanguages.strLangTurtle );
+            newModel.read( new StringReader( result ), "", "TURTLE" );
         } catch ( final RuntimeException e ) {
             fail();
         }
