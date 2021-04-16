@@ -12,6 +12,8 @@ produces as output a pretty-printed RDF/Turtle document.
 
 ## Why?
 
+### Reproducible Formatting
+
 Every RDF library comes with its own serializers, for example an Apache Jena Model can be written
 [in multiple ways](https://jena.apache.org/documentation/io/rdf-output.html), the easiest being
 calling the write method on a model itself: `model.write(System.out, "TURTLE")`. However, due to the
@@ -54,6 +56,53 @@ differently. You would not want the code of a project formatted differently in d
 would you?
 **turtle-formatter** addresses these problems by taking care of serialization order and providing a
 way to customize the formatting style.
+
+### Nice and Configurable Formatting
+
+Most serializers, while creating valid RDF/Turtle, create _ugly_ formatting. Obviously, what is ugly
+and what isn't is highly subjective, so this should be configurable. **turtle-formatter** addresses
+this by making the formatting style configurable, e.g. how alignment should be done, where extrace
+spaces should be inserted and even if indendation is using tabs or spaces. A default style is
+provided that reflects sane settings (the author's opinon). An RDF document formatted using the
+default style could look like this:
+
+```turtle
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . ①
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix : <http://example.com/relations#> .
+
+:Male a owl:Class ; ②
+  owl:disjointWith :Female ; ③
+  owl:equivalentClass [ ④
+    a owl:Restriction ;
+    owl:hasSelf true ; ⑤
+    owl:onProperty :isMale ;
+  ] ;
+  rdfs:subClassOf :Person .
+
+:hasBrother a owl:ObjectProperty ;
+  owl:propertyChainAxiom ( :hasSibling :isMale ) ; ⑥
+  rdfs:range :Male .
+
+:hasUncle a owl:ObjectProperty, owl:IrreflexiveProperty ; ⑦
+  owl:propertyChainAxiom ( :hasParent :hasSibling :hasHusband ) ; ⑦
+  owl:propertyChainAxiom ( :hasParent :hasBrother ) ;
+  rdfs:range :Male .
+```
+
+* ① Prefixes are sorted by common, then custom. They are _not_ aligned on the colon because that
+  looks bad when one prefix string is much longer than the others.
+* ② `rdf:type` is always written as `a`. It is always the first predicate and written in the same
+  line as the subject.
+* ③ Indentation is done using a fixed size, like in any other format or language. Predicates are not
+  aligned to subjects with an arbitrary length.
+* ④ Anonymous nodes are written using the `[ ]` notation whenever possible.
+* ⑤ Literal shortcuts are used where possible (e.g. no `"true"^^xsd:boolean`).
+* ⑥ RDF Lists are always written using the `( )` notation, no blank node IDs or
+  `rdf:next`/`rdf:first` seen here.
+* ⑦ The same predicates on the same subjects are repeated rather than using the `,` notation,
+  because especially when the objects are longer (nested anonymous nodes), it is difficult to
+  understand. The exception to this rule is for different `rdf:type`s.
 
 ## Usage
 
@@ -148,13 +197,13 @@ Boolean. Example:
       :blorb "blorb" ;
       :floop "floop" .
 
-# firstPredicateInNewLine false 
+# firstPredicateInNewLine false
 # alignPredicates false
 :test a rdf:Resource ;
   :blorb "blorb" ;
   :floop "floop" .
 
-# firstPredicateInNewLine true 
+# firstPredicateInNewLine true
 # alignPredicates does not matter
 :test
   a rdf:Resource ;
@@ -458,7 +507,7 @@ has statements for the properties `:a`, `:x` and `:z`:
 ```turtle
 :test
   :z "z" ;
-  :x "x" ; 
+  :x "x" ;
   :a "a" .
 ```
 
@@ -557,4 +606,3 @@ Varied
 ## Contact
 
 **turtle-formatter** is developed by Andreas Textor <<mail@atextor.de>>.
-
