@@ -1,6 +1,6 @@
 # turtle-formatter
 
-[![build](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml/badge.svg)](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml) [![codecov](https://codecov.io/gh/atextor/turtle-formatter/branch/main/graph/badge.svg?token=X2YFDI4Z4W)](https://codecov.io/gh/atextor/turtle-formatter) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![build](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml/badge.svg)](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.atextor/turtle-formatter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.atextor/turtle-formatter) [![codecov](https://codecov.io/gh/atextor/turtle-formatter/branch/main/graph/badge.svg?token=X2YFDI4Z4W)](https://codecov.io/gh/atextor/turtle-formatter) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 **turtle-formatter** is a Java library for pretty printing
 [RDF/Turtle](https://www.w3.org/TR/turtle/) documents in a _configurable_ and _reproducible_ way.
