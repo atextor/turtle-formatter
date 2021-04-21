@@ -138,7 +138,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final List<Statement> wellKnownSubjects = List.ofAll( style.subjectOrder ).flatMap( subjectType ->
             statements( model, RDF.type, subjectType ).sorted( subjectComparator ) );
         final List<Statement> otherSubjects = statements( model )
-            .filter( statement -> !statement.getPredicate().equals( RDF.type ) )
+            .filter( statement -> !( statement.getPredicate().equals( RDF.type )
+                && statement.getObject().isResource()
+                && style.subjectOrder.contains( statement.getObject().asResource() ) ) )
             .sorted( subjectComparator );
         final List<Statement> statements = wellKnownSubjects.appendAll( otherSubjects )
             .filter( statement -> !( statement.getSubject().isAnon()

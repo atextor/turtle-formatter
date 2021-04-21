@@ -311,6 +311,33 @@ public class TurtleFormatterTest {
 
     }
 
+    @Test
+    public void testSubjectsNotInSubjectOrder() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+            :Person a rdfs:Class .
+            :name a rdf:Property .
+            :address a rdf:Property .
+            :city a rdf:Property .
+            :Max a :Person ;
+                :name "Max" ;
+                :address [
+                    :city "City Z"
+                ] .
+            """;
+
+        final Model model = modelFromString( modelString );
+        final FormattingStyle style = FormattingStyle.builder().build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final Model resultModel = modelFromString( result );
+        assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
