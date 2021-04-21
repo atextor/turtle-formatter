@@ -158,6 +158,9 @@ public class FormattingStyle {
     boolean trimTrailingWhitespace = true;
 
     @Builder.Default
+    boolean keepUnusedPrefixes = false;
+
+    @Builder.Default
     List<String> prefixOrder = List.of(
         "rdf",
         "rdfs",

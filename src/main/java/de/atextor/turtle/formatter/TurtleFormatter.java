@@ -7,6 +7,7 @@ import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;
 import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.With;
@@ -208,10 +209,30 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             case RIGHT -> "@prefix %" + maxPrefixLength + "s: <%s>" + beforeDot + ".%n";
         };
 
-        final State prefixesWritten = prefixes.toStream().sorted( prefixOrder ).foldLeft( state,
-            ( newState, entry ) -> newState.write( String.format( prefixFormat, entry._1(), entry._2() ) ) );
+        final List<String> urisInModel = allUsedUris( state.model );
+        final State prefixesWritten = prefixes.toStream().sorted( prefixOrder )
+            .filter( entry -> style.keepUnusedPrefixes ||
+                urisInModel.find( resource -> resource.startsWith( entry._2() ) ).isDefined() )
+            .foldLeft( state, ( newState, entry ) ->
+                newState.write( String.format( prefixFormat, entry._1(), entry._2() ) ) );
 
         return prefixesWritten.newLine();
+    }
+
+    private List<String> allUsedUris( final Model model ) {
+        return List.ofAll( model::listStatements )
+            .flatMap( statement -> List.of( statement.getSubject(), statement.getPredicate(), statement.getObject() ) )
+            .<Option<String>>map( rdfNode -> {
+                if ( rdfNode.isURIResource() ) {
+                    return Option.of( rdfNode.asResource().getURI() );
+                }
+                if ( rdfNode.isLiteral() ) {
+                    return Option.of( rdfNode.asLiteral().getDatatypeURI() );
+                }
+                return Option.none();
+            } )
+            .filter( Option::isDefined )
+            .map( Option::get );
     }
 
     private String indent( final int level ) {

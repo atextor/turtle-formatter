@@ -24,6 +24,7 @@ public class TurtleFormatterTest {
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.LEFT )
             .insertFinalNewline( false )
+            .keepUnusedPrefixes( true )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -45,6 +46,7 @@ public class TurtleFormatterTest {
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.OFF )
             .insertFinalNewline( false )
+            .keepUnusedPrefixes( true )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -66,6 +68,7 @@ public class TurtleFormatterTest {
             .beforeDot( FormattingStyle.GapStyle.SPACE )
             .alignPrefixes( FormattingStyle.Alignment.RIGHT )
             .insertFinalNewline( false )
+            .keepUnusedPrefixes( true )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
@@ -113,7 +116,6 @@ public class TurtleFormatterTest {
     @Test
     public void testPredicateAlignmentWithFirstPredicateInSameLine() {
         final String modelString = """
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
             :foo1 :bar1 1 ;
@@ -139,7 +141,6 @@ public class TurtleFormatterTest {
     @Test
     public void testIndentationWithTabs() {
         final String modelString = """
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
             :foo1 :bar1 1 ;
@@ -161,7 +162,6 @@ public class TurtleFormatterTest {
     @Test
     public void testPredicateAlignmentWithFirstPredicateInNewLine() {
         final String modelString = """
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
             :foo1
@@ -188,7 +188,6 @@ public class TurtleFormatterTest {
     @Test
     public void testPredicateAndObjectAlignment() {
         final String modelString = """
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
             :foo1 :bar       1 ;
@@ -211,7 +210,6 @@ public class TurtleFormatterTest {
     @Test
     public void testPredicateAndObjectAlignmentWithFirstPredicateInNewLine() {
         final String modelString = """
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
             :foo1

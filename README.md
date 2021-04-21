@@ -364,6 +364,22 @@ true
 <tr>
 <td>
 
+`keepUnusedPrefixes`
+
+</td>
+<td>
+
+Boolean. If `true`, keeps prefixes that are not part of any statement.
+
+</td>
+<td>
+false
+</td>
+</tr>
+
+<tr>
+<td>
+
 `useCommaByDefault`
 
 </td>
