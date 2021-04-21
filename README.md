@@ -61,10 +61,10 @@ way to customize the formatting style.
 
 Most serializers, while creating valid RDF/Turtle, create _ugly_ formatting. Obviously, what is ugly
 and what isn't is highly subjective, so this should be configurable. **turtle-formatter** addresses
-this by making the formatting style configurable, e.g. how alignment should be done, where extrace
+this by making the formatting style configurable, e.g. how alignment should be done, where extra
 spaces should be inserted and even if indendation is using tabs or spaces. A default style is
-provided that reflects sane settings (the author's opinon). An RDF document formatted using the
-default style could look like this:
+provided that reflects sane settings (i.e., the author's opinion). An RDF document formatted using
+the default style could look like this:
 
 ```turtle
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . ①
