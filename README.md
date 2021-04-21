@@ -620,6 +620,11 @@ Varied
 
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
+## Release Notes
+
+* 1.0.1: Fix POM so that dependency can be used as jar
+* 1.0.0: First version
+
 ## Contact
 
 **turtle-formatter** is developed by Andreas Textor <<mail@atextor.de>>.
