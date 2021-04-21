@@ -167,8 +167,10 @@ public class FormattingStyle {
 
     @Builder.Default
     List<Resource> subjectOrder = List.of(
+        RDFS.Class,
         OWL2.Ontology,
         OWL2.Class,
+        RDF.Property,
         OWL2.ObjectProperty,
         OWL2.DatatypeProperty,
         OWL2.AnnotationProperty,

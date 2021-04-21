@@ -485,8 +485,9 @@ everything else lexicographically sorted.
 </td>
 <td>
 
-List.of(`owl:Ontology` `owl:Class` `owl:ObjectProperty` `owl:DatatypeProperty`
-`owl:AnnotationProperty` `owl:NamedIndividual` `owl:AllDifferent` `owl:Axiom`)
+List.of(`rdfs:Class` `owl:Ontology` `owl:Class` `rdf:Property` `owl:ObjectProperty`
+`owl:DatatypeProperty` `owl:AnnotationProperty` `owl:NamedIndividual` `owl:AllDifferent`
+`owl:Axiom`)
 
 </td>
 </tr>
