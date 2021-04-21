@@ -181,7 +181,10 @@ public class FormattingStyle {
 
     @Builder.Default
     List<Property> predicateOrder = List.of(
-        RDF.type
+        RDF.type,
+        RDFS.label,
+        RDFS.comment,
+        DCTerms.description
     );
 
     @Builder.Default

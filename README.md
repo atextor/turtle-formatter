@@ -515,7 +515,7 @@ has statements for the properties `:a`, `:x` and `:z`:
 </td>
 <td>
 
-List.of(`rdf:type`)
+List.of(`rdf:type` `rdfs:label` `rdfs:comment` `dcterms:description`)
 
 </td>
 </tr>
