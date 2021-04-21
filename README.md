@@ -622,6 +622,10 @@ Varied
 
 ## Release Notes
 
+* 1.1.0:
+  * Bugfix: Subjects with a `rdf:type` not in `subjectOrder` are rendered correctly
+  * Adjust default `subjectOrder` and `predicateOrder`
+  * Add new option `keepUnusedPrefixes` and by default render only used prefixes
 * 1.0.1: Fix POM so that dependency can be used as jar
 * 1.0.0: First version
 
