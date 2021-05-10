@@ -113,13 +113,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.1</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.1.0'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.1.1'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.1.0")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.1.1")`
 
 ### Calling the formatter
 
@@ -622,6 +622,8 @@ Varied
 
 ## Release Notes
 
+* 1.1.1:
+  * Make fields of `FormattingStyle` public, so that `DEFAULT` config is readable
 * 1.1.0:
   * Bugfix: Subjects with a `rdf:type` not in `subjectOrder` are rendered correctly
   * Adjust default `subjectOrder` and `predicateOrder`
