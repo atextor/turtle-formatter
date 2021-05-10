@@ -43,7 +43,7 @@ public class FormattingStyle {
     public static final KnownPrefix PREFIX_EX = new KnownPrefix( "ex", URI.create( "http://example.org/" ) );
 
     @Builder.Default
-    Set<KnownPrefix> knownPrefixes = Set.of(
+    public Set<KnownPrefix> knownPrefixes = Set.of(
         PREFIX_RDF,
         PREFIX_RDFS,
         PREFIX_XSD,
@@ -53,115 +53,115 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    GapStyle afterClosingParenthesis = GapStyle.NOTHING;
+    public GapStyle afterClosingParenthesis = GapStyle.NOTHING;
 
     @Builder.Default
-    GapStyle afterClosingSquareBracket = GapStyle.SPACE;
+    public GapStyle afterClosingSquareBracket = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle afterComma = GapStyle.SPACE;
+    public GapStyle afterComma = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle afterDot = GapStyle.NEWLINE;
+    public GapStyle afterDot = GapStyle.NEWLINE;
 
     @Builder.Default
-    GapStyle afterOpeningParenthesis = GapStyle.SPACE;
+    public GapStyle afterOpeningParenthesis = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle afterOpeningSquareBracket = GapStyle.NEWLINE;
+    public GapStyle afterOpeningSquareBracket = GapStyle.NEWLINE;
 
     @Builder.Default
-    GapStyle afterSemicolon = GapStyle.NEWLINE;
+    public GapStyle afterSemicolon = GapStyle.NEWLINE;
 
     @Builder.Default
-    Alignment alignPrefixes = Alignment.OFF;
+    public Alignment alignPrefixes = Alignment.OFF;
 
     @Builder.Default
-    GapStyle beforeClosingParenthesis = GapStyle.SPACE;
+    public GapStyle beforeClosingParenthesis = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle beforeClosingSquareBracket = GapStyle.NEWLINE;
+    public GapStyle beforeClosingSquareBracket = GapStyle.NEWLINE;
 
     @Builder.Default
-    GapStyle beforeComma = GapStyle.NOTHING;
+    public GapStyle beforeComma = GapStyle.NOTHING;
 
     @Builder.Default
-    GapStyle beforeDot = GapStyle.SPACE;
+    public GapStyle beforeDot = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle beforeOpeningParenthesis = GapStyle.SPACE;
+    public GapStyle beforeOpeningParenthesis = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle beforeOpeningSquareBracket = GapStyle.SPACE;
+    public GapStyle beforeOpeningSquareBracket = GapStyle.SPACE;
 
     @Builder.Default
-    GapStyle beforeSemicolon = GapStyle.SPACE;
+    public GapStyle beforeSemicolon = GapStyle.SPACE;
 
     @Builder.Default
-    Charset charset = Charset.UTF_8;
+    public Charset charset = Charset.UTF_8;
 
     @Builder.Default
-    NumberFormat doubleFormat = new DecimalFormat( "0.####E0" );
+    public NumberFormat doubleFormat = new DecimalFormat( "0.####E0" );
 
     @Builder.Default
-    EndOfLineStyle endOfLine = EndOfLineStyle.LF;
+    public EndOfLineStyle endOfLine = EndOfLineStyle.LF;
 
     @Builder.Default
-    IndentStyle indentStyle = IndentStyle.SPACE;
+    public IndentStyle indentStyle = IndentStyle.SPACE;
 
     @Builder.Default
-    WrappingStyle wrapListItems = WrappingStyle.FOR_LONG_LINES;
+    public WrappingStyle wrapListItems = WrappingStyle.FOR_LONG_LINES;
 
     @Builder.Default
-    boolean firstPredicateInNewLine = false;
+    public boolean firstPredicateInNewLine = false;
 
     @Builder.Default
-    boolean useAForRdfType = true;
+    public boolean useAForRdfType = true;
 
     @Builder.Default
-    boolean useCommaByDefault = false;
+    public boolean useCommaByDefault = false;
 
     @Builder.Default
-    Set<Property> commaForPredicate = Set.of( RDF.type );
+    public Set<Property> commaForPredicate = Set.of( RDF.type );
 
     @Builder.Default
-    Set<Property> noCommaForPredicate = Set.of();
+    public Set<Property> noCommaForPredicate = Set.of();
 
     @Builder.Default
-    boolean useShortLiterals = true;
+    public boolean useShortLiterals = true;
 
     @Builder.Default
-    boolean alignBaseIRI = false;
+    public boolean alignBaseIRI = false;
 
     @Builder.Default
-    boolean alignObjects = false;
+    public boolean alignObjects = false;
 
     @Builder.Default
-    boolean alignPredicates = false;
+    public boolean alignPredicates = false;
 
     @Builder.Default
-    int continuationIndentSize = 4;
+    public int continuationIndentSize = 4;
 
     @Builder.Default
-    boolean indentPrediates = true;
+    public boolean indentPrediates = true;
 
     @Builder.Default
-    boolean insertFinalNewline = true;
+    public boolean insertFinalNewline = true;
 
     @Builder.Default
-    int indentSize = 2;
+    public int indentSize = 2;
 
     @Builder.Default
-    int maxLineLength = 100;
+    public int maxLineLength = 100;
 
     @Builder.Default
-    boolean trimTrailingWhitespace = true;
+    public boolean trimTrailingWhitespace = true;
 
     @Builder.Default
-    boolean keepUnusedPrefixes = false;
+    public boolean keepUnusedPrefixes = false;
 
     @Builder.Default
-    List<String> prefixOrder = List.of(
+    public List<String> prefixOrder = List.of(
         "rdf",
         "rdfs",
         "xsd",
@@ -169,7 +169,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    List<Resource> subjectOrder = List.of(
+    public List<Resource> subjectOrder = List.of(
         RDFS.Class,
         OWL2.Ontology,
         OWL2.Class,
@@ -183,7 +183,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    List<Property> predicateOrder = List.of(
+    public List<Property> predicateOrder = List.of(
         RDF.type,
         RDFS.label,
         RDFS.comment,
@@ -191,7 +191,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    List<RDFNode> objectOrder = List.of(
+    public List<RDFNode> objectOrder = List.of(
         OWL2.NamedIndividual,
         OWL2.ObjectProperty,
         OWL2.DatatypeProperty,
@@ -206,7 +206,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "_:gen" + integer;
+    public BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "_:gen" + integer;
 
     public enum Alignment {
         LEFT,
