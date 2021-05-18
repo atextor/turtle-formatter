@@ -616,6 +616,25 @@ Varied
 </td>
 </tr>
 
+<tr>
+<td>
+
+`wrapListItems`
+
+</td>
+<td>
+
+`ALWAYS`, `NEVER` or `FOR_LONG_LINES`. Controls how line breaks are added after
+elements in RDF lists.
+
+</td>
+<td>
+
+`FOR_LONG_LINES`
+
+</td>
+</tr>
+
 </table>
 
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
