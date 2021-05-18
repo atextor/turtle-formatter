@@ -116,8 +116,8 @@ publishing {
                 url.set("https://github.com/atextor/turtle-formatter")
                 licenses {
                     license {
-                        name.set("GNU Lesser General Public Public License Version 3")
-                        url.set("https://www.gnu.org/licenses/lgpl-3.0")
+                        name.set("Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
                     }
                 }
                 developers {
