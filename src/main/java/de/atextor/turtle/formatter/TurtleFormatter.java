@@ -35,9 +35,9 @@ import java.util.function.Function;
 
 public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
 
-    private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
-
     public static final String OUTPUT_ERROR_MESSAGE = "Could not write to stream";
+
+    private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
 
     private final FormattingStyle style;
 
@@ -315,7 +315,10 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeList( final Resource resource, final State state ) {
-        final State opened = writeDelimiter( "(", style.beforeOpeningParenthesis, style.afterOpeningParenthesis,
+        final FormattingStyle.GapStyle afterOpeningParenthesis =
+            style.wrapListItems == FormattingStyle.WrappingStyle.ALWAYS ? FormattingStyle.GapStyle.NOTHING :
+                style.afterOpeningParenthesis;
+        final State opened = writeDelimiter( "(", style.beforeOpeningParenthesis, afterOpeningParenthesis,
             continuationIndent( state.indentationLevel ), state );
         final java.util.List<RDFNode> elementList = resource.as( RDFList.class ).asJavaList();
         final State elementsWritten = List.ofAll( elementList ).zipWithIndex()
@@ -323,12 +326,32 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 final RDFNode element = indexedElement._1();
                 final int index = indexedElement._2();
                 final boolean firstElement = index == 0;
-                final State spaceWritten = firstElement ? currentState : currentState.write( " " );
-                return writeRdfNode( element, spaceWritten );
+                return writeListElement( element, firstElement, currentState );
             } );
 
+        final State finalLineBreakWritten = style.wrapListItems == FormattingStyle.WrappingStyle.ALWAYS ?
+            elementsWritten.newLine().write( indent( elementsWritten.indentationLevel ) ) : elementsWritten;
+
         return writeDelimiter( ")", style.beforeClosingParenthesis, style.afterClosingParenthesis,
-            continuationIndent( state.indentationLevel ), elementsWritten );
+            continuationIndent( state.indentationLevel ), finalLineBreakWritten );
+    }
+
+    private State writeListElement( final RDFNode element, final boolean firstElement, final State state ) {
+        return switch ( style.wrapListItems ) {
+            case NEVER:
+                final State spaceWritten = firstElement ? state : state.write( " " );
+                yield writeRdfNode( element, spaceWritten );
+            case ALWAYS:
+                yield writeRdfNode( element, state.newLine().write( continuationIndent( state.indentationLevel ) ) );
+            case FOR_LONG_LINES:
+                final int alignmentAfterElementIsWritten = writeRdfNode( element,
+                    state.withOutputStream( OutputStream.nullOutputStream() ) ).alignment;
+                final boolean wouldElementExceedLineLength =
+                    ( alignmentAfterElementIsWritten + 1 ) > style.maxLineLength;
+                yield writeRdfNode( element, wouldElementExceedLineLength ?
+                    state.newLine().write( continuationIndent( state.indentationLevel ) ) :
+                    ( firstElement ? state : state.write( " " ) ) );
+        };
     }
 
     private State writeAnonymousResource( final Resource resource, final State state ) {

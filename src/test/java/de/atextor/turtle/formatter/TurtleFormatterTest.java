@@ -284,6 +284,88 @@ public class TurtleFormatterTest {
     }
 
     @Test
+    public void testListWrappingNever() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar ( "foo1" "foo2" "foo3" "foo4" ) .
+            """;
+        // Line length ruler
+        //  ###############################################
+        //  1        10        20        30        40
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .maxLineLength( 30 )
+            .wrapListItems( FormattingStyle.WrappingStyle.NEVER )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testListWrappingAlways() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar ( "foo1" "foo2" "foo3" "foo4" ) .
+            """;
+        // Line length ruler
+        //  ###############################################
+        //  1        10        20        30        40
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .maxLineLength( 30 )
+            .wrapListItems( FormattingStyle.WrappingStyle.ALWAYS )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final String expected = """
+            @prefix : <http://example.com/> .
+                        
+            :foo :bar (
+                "foo1"
+                "foo2"
+                "foo3"
+                "foo4"
+               ) .
+            """;
+        assertThat( result.trim() ).isEqualTo( expected.trim() );
+    }
+
+    @Test
+    public void testListWrappingForLongLines() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar ( "foo1" "foo2" "foo3" "foo4" ) .
+            """;
+        // Line length ruler
+        //  ###############################################
+        //  1        10        20        30        40
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .maxLineLength( 30 )
+            .wrapListItems( FormattingStyle.WrappingStyle.FOR_LONG_LINES )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final String expected = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar ( "foo1" "foo2"
+                "foo3" "foo4" ) .
+            """;
+        assertThat( result.trim() ).isEqualTo( expected.trim() );
+    }
+
+    @Test
     public void testUtf8BomCharset() {
         final Model model = prefixModel();
         final FormattingStyle style = FormattingStyle.builder()
