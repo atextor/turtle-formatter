@@ -48,8 +48,7 @@ public class FormattingStyle {
         PREFIX_RDFS,
         PREFIX_XSD,
         PREFIX_OWL,
-        PREFIX_DCTERMS,
-        PREFIX_FMT
+        PREFIX_DCTERMS
     );
 
     @Builder.Default
