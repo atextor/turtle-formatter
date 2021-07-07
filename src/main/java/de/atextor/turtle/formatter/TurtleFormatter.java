@@ -496,11 +496,14 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine && !subject.isAnon() ?
             state.newLine() : state;
 
-        final boolean inBrackets = subject.isAnon() && !state.identifiedAnonymousResources.keySet().contains( subject );
+        final boolean isNamedAnon = state.identifiedAnonymousResources.keySet().contains( subject );
+        final boolean inBrackets = subject.isAnon() && !isNamedAnon;
 
-        final boolean shouldIndentFirstProperty = firstProperty && (
-            ( style.firstPredicateInNewLine && !inBrackets ) || ( inBrackets && state.indentationLevel <= 1 ) );
-        final boolean shouldIndentOtherProperty = !firstProperty && inBrackets;
+        final boolean shouldIndentFirstProperty = firstProperty &&
+            ( ( style.firstPredicateInNewLine && !inBrackets )
+                || ( inBrackets && state.indentationLevel <= 1 ) );
+        final boolean shouldIndentOtherProperty = !firstProperty &&
+            ( inBrackets || isNamedAnon );
         final State indentedPredicate = shouldIndentFirstProperty || shouldIndentOtherProperty ?
             wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
 
