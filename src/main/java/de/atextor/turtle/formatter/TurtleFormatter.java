@@ -123,12 +123,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 Integer.MAX_VALUE
         ).thenComparing( property -> prefixMapping.shortForm( property.getURI() ) );
 
-        final State initialState = Stream
-            .ofAll( anonymousResourcesThatNeedAnId( model ) )
-            .zipWithIndex()
-            .map( entry -> new Tuple2<>( entry._1(), style.anonymousNodeIdGenerator.apply( entry._1(), entry._2() ) ) )
-            .foldLeft( new State( outputStream, model, predicateOrder, prefixMapping ), ( state, entry ) ->
-                state.withIdentifiedAnonymousResource( entry._1(), entry._2() ) );
+        final State initialState = buildInitialState( model, outputStream, prefixMapping, predicateOrder );
 
         final State prefixesWritten = writePrefixes( initialState );
 
@@ -136,6 +131,44 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             Comparator.comparing( statement -> statement.getSubject().isURIResource() ?
                 prefixMapping.shortForm( statement.getSubject().getURI() ) : statement.getSubject().toString() );
 
+        final List<Statement> statements = determineStatements( model, subjectComparator );
+        final State namedResourcesWritten = writeNamedResources( prefixesWritten, statements );
+        final State allResourcesWritten = writeAnonymousResources( namedResourcesWritten );
+        final State finalState = style.insertFinalNewline ? allResourcesWritten.newLine() : allResourcesWritten;
+
+        LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
+            finalState.identifiedAnonymousResources.size() );
+    }
+
+    private State writeAnonymousResources( final State state ) {
+        return List.ofAll( state.identifiedAnonymousResources.keySet() )
+            .foldLeft( state, ( currentState, resource ) -> {
+                if ( !resource.listProperties().hasNext() ) {
+                    return currentState;
+                }
+                return writeSubject( resource, currentState.withIndentationLevel( 0 ) );
+            } );
+    }
+
+    private State writeNamedResources( final State state, final List<Statement> statements ) {
+        return statements
+            .map( Statement::getSubject )
+            .foldLeft( state, ( currentState, resource ) -> {
+                if ( !resource.listProperties().hasNext() || currentState.visitedResources.contains( resource ) ) {
+                    return currentState;
+                }
+                if ( resource.isURIResource() ) {
+                    return writeSubject( resource, currentState.withIndentationLevel( 0 ) );
+                }
+                final State resourceWritten = writeAnonymousResource( resource, currentState
+                    .withIndentationLevel( 0 ) );
+                final boolean omitSpaceBeforeDelimiter = !currentState.identifiedAnonymousResources.keySet()
+                    .contains( resource );
+                return writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
+            } );
+    }
+
+    private List<Statement> determineStatements( final Model model, final Comparator<Statement> subjectComparator ) {
         final List<Statement> wellKnownSubjects = List.ofAll( style.subjectOrder ).flatMap( subjectType ->
             statements( model, RDF.type, subjectType ).sorted( subjectComparator ) );
         final List<Statement> otherSubjects = statements( model )
@@ -143,37 +176,20 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 && statement.getObject().isResource()
                 && style.subjectOrder.contains( statement.getObject().asResource() ) ) )
             .sorted( subjectComparator );
-        final List<Statement> statements = wellKnownSubjects.appendAll( otherSubjects )
+        return wellKnownSubjects.appendAll( otherSubjects )
             .filter( statement -> !( statement.getSubject().isAnon()
                 && model.contains( null, null, statement.getSubject() ) ) );
+    }
 
-        final State namedResourcesWritten = statements
-            .map( Statement::getSubject )
-            .foldLeft( prefixesWritten, ( state, resource ) -> {
-                if ( !resource.listProperties().hasNext() || state.visitedResources.contains( resource ) ) {
-                    return state;
-                }
-                if ( resource.isURIResource() ) {
-                    return writeSubject( resource, state.withIndentationLevel( 0 ) );
-                }
-                final State resourceWritten = writeAnonymousResource( resource, state.withIndentationLevel( 0 ) );
-                final boolean omitSpaceBeforeDelimiter = !state.identifiedAnonymousResources.keySet()
-                    .contains( resource );
-                return writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
-            } );
-
-        final State allResourcesWritten = List.ofAll( namedResourcesWritten.identifiedAnonymousResources.keySet() )
-            .foldLeft( namedResourcesWritten, ( state, resource ) -> {
-                if ( !resource.listProperties().hasNext() ) {
-                    return state;
-                }
-                return writeSubject( resource, state.withIndentationLevel( 0 ) );
-            } );
-
-        final State finalState = style.insertFinalNewline ? allResourcesWritten.newLine() : allResourcesWritten;
-
-        LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
-            finalState.identifiedAnonymousResources.size() );
+    private State buildInitialState( final Model model, final OutputStream outputStream,
+                                     final PrefixMapping prefixMapping,
+                                     final Comparator<Property> predicateOrder ) {
+        return Stream
+            .ofAll( anonymousResourcesThatNeedAnId( model ) )
+            .zipWithIndex()
+            .map( entry -> new Tuple2<>( entry._1(), style.anonymousNodeIdGenerator.apply( entry._1(), entry._2() ) ) )
+            .foldLeft( new State( outputStream, model, predicateOrder, prefixMapping ), ( state, entry ) ->
+                state.withIdentifiedAnonymousResource( entry._1(), entry._2() ) );
     }
 
     /**
