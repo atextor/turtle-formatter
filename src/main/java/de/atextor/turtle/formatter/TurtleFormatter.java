@@ -271,7 +271,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                                   final FormattingStyle.GapStyle after, final String indentation,
                                   final State state ) {
         final State beforeState = switch ( before ) {
-            case SPACE -> state.write( " " );
+            case SPACE -> state.lastCharacter.equals( " " ) ? state : state.write( " " );
             case NOTHING -> state;
             case NEWLINE -> state.newLine().write( indentation );
         };
@@ -573,9 +573,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
         int alignment;
 
+        String lastCharacter;
+
+
         public State( final OutputStream outputStream, final Model model, final Comparator<Property> predicateOrder,
                       final PrefixMapping prefixMapping ) {
-            this( outputStream, model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0 );
+            this( outputStream, model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0, "" );
         }
 
         public State withIdentifiedAnonymousResource( final Resource anonymousResource, final String id ) {
@@ -599,12 +602,13 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
 
         public State write( final String content ) {
+            final String end = content.length() > 0 ? content.substring( content.length() - 1 ) : "";
             try {
                 outputStream.write( content.getBytes( encoding ) );
             } catch ( final IOException e ) {
                 LOG.error( OUTPUT_ERROR_MESSAGE, e );
             }
-            return withAlignment( alignment + content.length() );
+            return withLastCharacter( end ).withAlignment( alignment + content.length() );
         }
     }
 }
