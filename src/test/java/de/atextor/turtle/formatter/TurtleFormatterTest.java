@@ -4,6 +4,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -277,6 +278,35 @@ public class TurtleFormatterTest {
         final FormattingStyle style = FormattingStyle.builder()
             .knownPrefixes( Set.of() )
             .predicateOrder( List.of( foo, bar, baz ) )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testTopLevelIdentifiedAnonymousNodeWithMultiplePredicates() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :a a :type ;
+              :foo _:gen0 ;
+              :bar 1 .
+
+            :b :foo _:gen0 .
+
+            _:gen0 a :type ;
+              :foo "1" ;
+              :bar "2" .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final String ex = "http://example.com/";
+        final Property foo = ResourceFactory.createProperty( ex + "foo" );
+        final Property bar = ResourceFactory.createProperty( ex + "bar" );
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .predicateOrder( List.of( RDF.type, foo, bar ) )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
