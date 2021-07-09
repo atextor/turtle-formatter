@@ -448,9 +448,10 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
 
         // indent
-        final State indentedSubject = state.write( indent( state.indentationLevel ) );
-        // subject
         final boolean isIdentifiedAnon = state.identifiedAnonymousResources.keySet().contains( resource );
+        final boolean subjectsNeedsIdentation = !resource.isAnon() || isIdentifiedAnon;
+        final State indentedSubject = subjectsNeedsIdentation ? state.write( indent( state.indentationLevel ) ) : state;
+        // subject
         final State stateWithSubject = resource.isURIResource() || isIdentifiedAnon ?
             writeResource( resource, indentedSubject ).withVisitedResource( resource ) :
             indentedSubject.withVisitedResource( resource );
@@ -499,13 +500,20 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final boolean isNamedAnon = state.identifiedAnonymousResources.keySet().contains( subject );
         final boolean inBrackets = subject.isAnon() && !isNamedAnon;
 
-        final boolean shouldIndentFirstProperty = firstProperty &&
+        final boolean shouldIndentFirstPropertyByLevel = firstProperty &&
             ( ( style.firstPredicateInNewLine && !inBrackets )
                 || ( inBrackets && state.indentationLevel <= 1 ) );
-        final boolean shouldIndentOtherProperty = !firstProperty &&
+        final boolean shouldIndentOtherPropertyByLevel = !firstProperty &&
             ( inBrackets || isNamedAnon );
-        final State indentedPredicate = shouldIndentFirstProperty || shouldIndentOtherProperty ?
+
+        final State indentedPredicateByLevel = shouldIndentFirstPropertyByLevel || shouldIndentOtherPropertyByLevel ?
             wrappedPredicate.write( indent( state.indentationLevel ) ) : wrappedPredicate;
+
+        final boolean shouldIndentFirstPropertyOnce = firstProperty &&
+            ( inBrackets && state.indentationLevel > 1 );
+
+        final State indentedPredicate = shouldIndentFirstPropertyOnce ?
+            indentedPredicateByLevel.write( indent( 1 ) ) : indentedPredicateByLevel;
 
         final State predicateAlignment = !firstProperty && style.alignPredicates && !subject.isAnon() ?
             indentedPredicate.write( " ".repeat( alignment ) ) : indentedPredicate;
