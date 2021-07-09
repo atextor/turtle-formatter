@@ -362,7 +362,7 @@ public class TurtleFormatterTest {
                 "foo2"
                 "foo3"
                 "foo4"
-               ) .
+              ) .
             """;
         assertThat( result.trim() ).isEqualTo( expected.trim() );
     }
