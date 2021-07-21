@@ -366,7 +366,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                     ( alignmentAfterElementIsWritten + 1 ) > style.maxLineLength;
                 yield writeRdfNode( element, wouldElementExceedLineLength ?
                     state.newLine().write( continuationIndent( state.indentationLevel ) ) :
-                    ( firstElement ? state : state.write( " " ) ) );
+                    ( firstElement || state.getLastCharacter().equals( " " ) ? state : state.write( " " ) ) );
         };
     }
 

@@ -396,6 +396,28 @@ public class TurtleFormatterTest {
     }
 
     @Test
+    public void testListOfAnonymousNodes() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar ( [
+                :x 1 ;
+              ] [
+                :x 2 ;
+              ] ) .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        System.out.println( result );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
     public void testUtf8BomCharset() {
         final Model model = prefixModel();
         final FormattingStyle style = FormattingStyle.builder()
