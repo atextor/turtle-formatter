@@ -89,21 +89,26 @@ public class TurtleFormatterTest {
             @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix : <http://example.com/> .
 
-            :foo1 :bar 1 .
+            :foo01 :bar 1 .
 
-            :foo2 :bar "2" .
+            :foo02 :bar "2" .
 
-            :foo3 :bar true .
+            :foo03 :bar true .
 
-            :foo4 :bar -5.0 .
+            :foo04 :bar -5.0 .
 
-            :foo5 :bar 4.2E9 .
+            :foo05 :bar 4.2E9 .
 
-            :foo6 :bar "2021-01-01"^^xsd:date .
+            :foo06 :bar "2021-01-01"^^xsd:date .
 
-            :foo7 :bar "something"^^:custom .
+            :foo07 :bar "something"^^:custom .
 
-            :foo8 :bar "something"@en .
+            :foo08 :bar "something"@en .
+
+            :foo09 :bar \"""This contains a " quote\""" .
+
+            :foo10 :bar \"""This contains a
+            linebreak\""" .
             """;
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder()
