@@ -15,10 +15,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 
+import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TurtleFormatterPropertyTest {
@@ -166,6 +168,44 @@ public class TurtleFormatterPropertyTest {
         final Model newModel = ModelFactory.createDefaultModel();
         try {
             newModel.read( new StringReader( result ), "", "TURTLE" );
+        } catch ( final RuntimeException e ) {
+            fail();
+        }
+    }
+
+    private final TurtleFormatter defaultFormatter = new TurtleFormatter( FormattingStyle.DEFAULT );
+
+    private final Resource subject = ResourceFactory.createResource( "urn:foo" );
+
+    private final org.apache.jena.rdf.model.Property predicate = ResourceFactory.createProperty( "urn:bar" );
+
+    @Provide
+    Arbitrary<Literal> anyStringLiteralWithSpecialCharacters() {
+        return Arbitraries.strings().all().map( ResourceFactory::createStringLiteral );
+    }
+
+    @Property
+    public void anyModelContainingSpecialCharactersIsSyntacticallyValid( @ForAll(
+        "anyStringLiteralWithSpecialCharacters" ) final Literal literal ) {
+        final Model model = ModelFactory.createDefaultModel();
+        model.add( subject, predicate, literal );
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream( 128 );
+        try {
+            model.write( out, "TURTLE" );
+        } catch ( final Exception e ) {
+            // If Jena itself can't write it, we don't need to try it
+            return;
+        }
+
+        final String result = defaultFormatter.apply( model );
+        final Model newModel = ModelFactory.createDefaultModel();
+        try {
+            newModel.read( new StringReader( result ), "", "TURTLE" );
+            final Literal newLiteral =
+                newModel.listStatements( subject, predicate, (RDFNode) null ).nextStatement().getLiteral();
+            assertThat( newLiteral.asNode().getLiteralLexicalForm() )
+                .isEqualTo( literal.asNode().getLiteralLexicalForm() );
         } catch ( final RuntimeException e ) {
             fail();
         }

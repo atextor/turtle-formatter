@@ -402,14 +402,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeLiteral( final Literal literal, final State state ) {
-        final String quote = literal.getLexicalForm().contains( "\n" )
-            || literal.getLexicalForm().contains( "\"" ) ? "\"\"\"" : "\"";
-
         if ( literal.getDatatypeURI().equals( XSD.xboolean.getURI() ) ) {
             return state.write( literal.getBoolean() ? "true" : "false" );
         }
         if ( literal.getDatatypeURI().equals( XSD.xstring.getURI() ) ) {
-            return state.write( quote + literal.getValue().toString() + quote );
+            return state.write( quoteAndEscape( literal ) );
         }
         if ( literal.getDatatypeURI().equals( XSD.decimal.getURI() ) ) {
             return state.write( literal.getLexicalForm() );
@@ -421,12 +418,18 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return state.write( style.doubleFormat.format( literal.getDouble() ) );
         }
         if ( literal.getDatatypeURI().equals( RDF.langString.getURI() ) ) {
-            return state.write( quote + literal.getLexicalForm() + quote + "@" + literal.getLanguage() );
+            return state.write( quoteAndEscape( literal ) + "@" + literal.getLanguage() );
         }
 
         final Resource typeResource = ResourceFactory.createResource( literal.getDatatypeURI() );
-        final State literalWritten = state.write( quote + literal.getLexicalForm() + quote + "^^" );
+        final State literalWritten = state.write( quoteAndEscape( literal ) + "^^" );
         return writeUriResource( typeResource, literalWritten );
+    }
+
+    private String quoteAndEscape( final RDFNode node ) {
+        final String value = node.asNode().getLiteralLexicalForm();
+        final String quote = value.contains( "\n" ) || value.contains( "\"" ) ? "\"\"\"" : "\"";
+        return quote + value + quote;
     }
 
     private State writeRdfNode( final RDFNode node, final State state ) {

@@ -28,6 +28,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("net.jqwik:jqwik:1.4.0")
+    testImplementation("org.apache.jena:apache-jena-libs:3.17.0")
 
     testAnnotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.3.0")
 
