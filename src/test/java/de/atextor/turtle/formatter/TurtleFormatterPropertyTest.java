@@ -184,7 +184,7 @@ public class TurtleFormatterPropertyTest {
         return Arbitraries.strings().all().map( ResourceFactory::createStringLiteral );
     }
 
-    @Property
+    @Property( tries = 500, seed = "1" )
     public void anyModelContainingSpecialCharactersIsSyntacticallyValid( @ForAll(
         "anyStringLiteralWithSpecialCharacters" ) final Literal literal ) {
         final Model model = ModelFactory.createDefaultModel();
@@ -207,7 +207,7 @@ public class TurtleFormatterPropertyTest {
             assertThat( newLiteral.asNode().getLiteralLexicalForm() )
                 .isEqualTo( literal.asNode().getLiteralLexicalForm() );
         } catch ( final RuntimeException e ) {
-            fail();
+            fail( e );
         }
     }
 }
