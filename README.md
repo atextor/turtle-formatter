@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.0.
+current version is 1.2.1.
 
 **Current Status**: The library is feature-complete.
 
