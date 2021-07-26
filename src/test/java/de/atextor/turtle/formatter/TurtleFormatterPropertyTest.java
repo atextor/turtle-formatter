@@ -72,8 +72,8 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<Literal> anyLiteral() {
-        return Arbitraries.oneOf( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(), anyDoubleLiteral(),
-            anyIntegerNumberLiteral() );
+        return Arbitraries.oneOf( List.of( anyStringLiteral(), anyLangStringLiteral(), anyFloatLiteral(),
+            anyDoubleLiteral(), anyIntegerNumberLiteral() ) );
     }
 
     @Provide
@@ -93,7 +93,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<String> anyUri() {
-        return Arbitraries.oneOf( anyUrl(), anyUrn() );
+        return Arbitraries.oneOf( List.of( anyUrl(), anyUrn() ) );
     }
 
     @Provide
@@ -103,7 +103,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<Resource> anyResource() {
-        return Arbitraries.oneOf( anyAnonymousResource(), anyNamedResource() );
+        return Arbitraries.oneOf( List.of( anyAnonymousResource(), anyNamedResource() ) );
     }
 
     @Provide
@@ -126,7 +126,7 @@ public class TurtleFormatterPropertyTest {
 
     @Provide
     Arbitrary<RDFNode> anyRdfNode( final Model model ) {
-        return Arbitraries.oneOf( anyLiteral(), anyResource(), anyList( model ) );
+        return Arbitraries.oneOf( List.of( anyLiteral(), anyResource(), anyList( model ) ) );
     }
 
     @Provide
