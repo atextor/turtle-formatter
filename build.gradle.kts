@@ -3,8 +3,8 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 plugins {
     java
     jacoco
-    id("com.github.ben-manes.versions") version "0.36.0"
-    id("com.adarshr.test-logger") version "2.1.1"
+    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.adarshr.test-logger") version "3.0.0"
     id("io.franzbecker.gradle-lombok") version "4.0.0"
     `java-library`
     `maven-publish`
@@ -19,20 +19,24 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.jena:jena-core:3.17.0")
-    implementation("io.vavr:vavr:0.10.3")
-    implementation("org.slf4j:slf4j-api:1.7.30")
+    implementation("org.apache.jena:jena-core:4.1.0")
+    implementation("io.vavr:vavr:0.10.4")
+    implementation("org.slf4j:slf4j-api:1.7.32")
+    compileOnly("org.projectlombok:lombok:1.18.20")
 
-    annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.3.0")
+    annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.4.1")
+    annotationProcessor("org.projectlombok:lombok:1.18.20")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
-    testImplementation("org.assertj:assertj-core:3.19.0")
-    testImplementation("net.jqwik:jqwik:1.4.0")
-    testImplementation("org.apache.jena:apache-jena-libs:3.17.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+    testImplementation("org.assertj:assertj-core:3.20.2")
+    testImplementation("net.jqwik:jqwik:1.5.3")
+    testImplementation("org.apache.jena:apache-jena-libs:4.1.0")
+    testCompileOnly("org.projectlombok:lombok:1.18.20")
 
-    testAnnotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.3.0")
+    testAnnotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.4.1")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.20")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
 }
 
 java {
@@ -54,7 +58,7 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(arrayOf("--release", "11"))
+    options.compilerArgs.addAll(arrayOf("--release", "11", "-Xlint:unchecked"))
 }
 
 tasks.compileJava {
