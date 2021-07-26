@@ -8,7 +8,8 @@
 It takes as input a formatting style and an [Apache Jena](https://jena.apache.org) Model and
 produces as output a pretty-printed RDF/Turtle document.
 
-Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0.
+Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
+current version is 1.2.0.
 
 **Current Status**: The library is feature-complete.
 
@@ -115,13 +116,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.0'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.1'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.0")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.1")`
 
 ### Calling the formatter
 
@@ -643,6 +644,10 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.1:
+  * Improve formatting for blank nodes nested in lists
+  * Use triple quotes for literals containing line breaks
+  * Use Jena's mechanisms for escaping special characters in literals
 * 1.2.0:
   * Add `wrapListItems` configuration option
   * Change license from LGPL 3.0 to Apache 2.0
