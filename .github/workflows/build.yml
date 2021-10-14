@@ -38,7 +38,7 @@ jobs:
       - name: Gradle build
         run: ./gradlew clean build jacocoTestReport --stacktrace
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           name: codecov-umbrella
           env_vars: OS,USED_JAVA
