@@ -24,7 +24,6 @@ dependencies {
     implementation("org.slf4j:slf4j-api:1.7.32")
     compileOnly("org.projectlombok:lombok:1.18.20")
 
-    annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.4.1")
     annotationProcessor("org.projectlombok:lombok:1.18.20")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
@@ -33,7 +32,6 @@ dependencies {
     testImplementation("org.apache.jena:apache-jena-libs:4.1.0")
     testCompileOnly("org.projectlombok:lombok:1.18.20")
 
-    testAnnotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.4.1")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.20")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
@@ -57,20 +55,16 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
     }
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(arrayOf("--release", "11", "-Xlint:unchecked"))
-}
-
 tasks.compileJava {
     options.encoding = "UTF-8"
-    sourceCompatibility = "15"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
 tasks.compileTestJava {
     options.encoding = "UTF-8"
-    sourceCompatibility = "15"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
 tasks.test {
@@ -81,15 +75,14 @@ tasks.test {
 }
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = "0.8.7"
 }
 
 tasks.jacocoTestReport {
     reports {
-        xml.isEnabled = true
-        xml.destination = file("${buildDir}/reports/jacoco/report.xml")
-        html.isEnabled = true
-        html.destination = file("${buildDir}/reports/jacoco/html-report")
+        xml.required.set(true)
+        html.required.set(true)
+        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/html-report"))
     }
 }
 

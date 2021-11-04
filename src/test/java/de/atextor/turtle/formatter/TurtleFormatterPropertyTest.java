@@ -199,13 +199,17 @@ public class TurtleFormatterPropertyTest {
         }
 
         final String result = defaultFormatter.apply( model );
+        final Model originalModel = ModelFactory.createDefaultModel();
         final Model newModel = ModelFactory.createDefaultModel();
         try {
+            originalModel.read( new StringReader( out.toString() ), "", "TURTLE" );
             newModel.read( new StringReader( result ), "", "TURTLE" );
+            final Literal originalLiteral =
+                originalModel.listStatements( subject, predicate, (RDFNode) null ).nextStatement().getLiteral();
             final Literal newLiteral =
                 newModel.listStatements( subject, predicate, (RDFNode) null ).nextStatement().getLiteral();
             assertThat( newLiteral.asNode().getLiteralLexicalForm() )
-                .isEqualTo( literal.asNode().getLiteralLexicalForm() );
+                .isEqualTo( originalLiteral.asNode().getLiteralLexicalForm() );
         } catch ( final RuntimeException e ) {
             fail( e );
         }
