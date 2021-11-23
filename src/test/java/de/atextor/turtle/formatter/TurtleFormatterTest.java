@@ -423,6 +423,26 @@ public class TurtleFormatterTest {
     }
 
     @Test
+    public void testEmptyUrlWithEmptyBase() {
+        final String modelString = """
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix : <http://example.com/> .
+
+            :Person a rdfs:Class ;
+              :foo <> .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        System.out.println( result );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
     public void testUtf8BomCharset() {
         final Model model = prefixModel();
         final FormattingStyle style = FormattingStyle.builder()
@@ -478,7 +498,7 @@ public class TurtleFormatterTest {
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
-        model.read( stream, "", "TURTLE" );
+        model.read( stream, TurtleFormatter.EMPTY_BASE, "TURTLE" );
         return model;
     }
 
