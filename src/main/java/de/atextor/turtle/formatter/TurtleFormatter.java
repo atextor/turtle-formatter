@@ -210,8 +210,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private PrefixMapping buildPrefixMapping( final Model model ) {
         final Map<String, String> prefixMap = Stream.ofAll( style.knownPrefixes )
-            .filter( knownPrefix -> model.getNsPrefixURI( knownPrefix.getPrefix() ) == null )
-            .toMap( FormattingStyle.KnownPrefix::getPrefix, knownPrefix -> knownPrefix.getIri().toString() );
+            .filter( knownPrefix -> model.getNsPrefixURI( knownPrefix.prefix() ) == null )
+            .toMap( FormattingStyle.KnownPrefix::prefix, knownPrefix -> knownPrefix.iri().toString() );
         return PrefixMapping.Factory.create().setNsPrefixes( model.getNsPrefixMap() )
             .setNsPrefixes( prefixMap.toJavaMap() );
     }

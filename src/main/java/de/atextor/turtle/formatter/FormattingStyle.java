@@ -1,7 +1,6 @@
 package de.atextor.turtle.formatter;
 
 import lombok.Builder;
-import lombok.Value;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -244,10 +243,6 @@ public class FormattingStyle {
         NEVER
     }
 
-    @Value
-    public static class KnownPrefix {
-        String prefix;
-
-        URI iri;
+    public record KnownPrefix(String prefix, URI iri) {
     }
 }
