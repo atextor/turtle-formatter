@@ -109,7 +109,17 @@ the default style could look like this:
 
 ## Usage
 
-### Add dependency
+### Usage as a CLI (command line interface)
+
+turtle-formatter itself is only a library and thus intended to be used programmatically, which is
+explained in the following sections. However, in the sibling project
+[owl-cli](https://github.com/atextor/owl-cli), turtle-formatter is used and can be called using a
+command line interface to pretty-print any OWL or RDF document. See owl-cli's [Getting
+Started](https://atextor.de/owl-cli/main/snapshot/index.html) to get the tool and the [write command
+documentation](https://atextor.de/owl-cli/main/snapshot/usage.html#write-command) to see which
+command line switches are available to adjust the formatting.
+
+### Usage as a library
 
 Add the following dependency to your Maven `pom.xml`:
 ```xml
