@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 public class TurtleFormatterTest {
     @Test
@@ -493,6 +494,21 @@ public class TurtleFormatterTest {
         final String result = formatter.apply( model );
         final Model resultModel = modelFromString( result );
         assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+    }
+
+    @Test
+    public void testEscapedUri() {
+        final String modelString = """
+            @prefix dc: <http://purl.org/spar/datacite/> .
+            @prefix doi: <https://doi.org/> .
+            @prefix : <http://example.org#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+            :something a :publication ;
+                rdfs:label "Paper title" ;
+                dc:hasIdentifier doi:10.1137\\/1.9781611970937 .
+            """;
+        assertThatCode( () -> modelFromString( modelString ) ).doesNotThrowAnyException();
     }
 
     private Model modelFromString( final String content ) {
