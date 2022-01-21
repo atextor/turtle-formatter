@@ -32,6 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
 
@@ -40,6 +42,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     public static final String EMPTY_BASE = "urn:turtle-formatter";
 
     private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
+
+    /**
+     * Reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
+     */
+    private static final Pattern RESERVED_CHARACTER_ESCAPE_SEQUENCES = Pattern.compile( "[~.\\-!$&'()*+,;=/?#@%_]" );
 
     private final FormattingStyle style;
 
@@ -400,7 +407,23 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         // replace that with something "smart" such as the current directory.
         final String uriWithoutEmptyBase = uri.startsWith( EMPTY_BASE ) ? uri.substring( EMPTY_BASE.length() ) : uri;
         final String shortForm = state.prefixMapping.shortForm( uriWithoutEmptyBase );
-        return shortForm.equals( uriWithoutEmptyBase ) ? "<" + uriWithoutEmptyBase + ">" : shortForm;
+        if ( shortForm.equals( uriWithoutEmptyBase ) ) {
+            // RDF Term: https://www.w3.org/TR/turtle/#grammar-production-IRIREF
+            return "<" + uriWithoutEmptyBase + ">";
+        } else {
+            // Local name: https://www.w3.org/TR/turtle/#grammar-production-PN_LOCAL
+            return escapeLocalName( shortForm );
+        }
+    }
+
+    /**
+     * Perform escaping of reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
+     *
+     * @param localName the local name of an RDF resources
+     * @return the escaped localName
+     */
+    private String escapeLocalName( final String localName ) {
+        return RESERVED_CHARACTER_ESCAPE_SEQUENCES.matcher( localName ).replaceAll( match -> "\\\\" + match.group() );
     }
 
     private State writeUriResource( final Resource resource, final State state ) {

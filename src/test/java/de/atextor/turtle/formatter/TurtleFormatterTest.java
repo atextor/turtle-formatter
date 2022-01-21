@@ -3,7 +3,10 @@ package de.atextor.turtle.formatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 public class TurtleFormatterTest {
     @Test
@@ -497,18 +499,22 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    public void testEscapedUri() {
+    public void testEscapedLocalName() {
         final String modelString = """
-            @prefix dc: <http://purl.org/spar/datacite/> .
-            @prefix doi: <https://doi.org/> .
-            @prefix : <http://example.org#> .
-            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix : <http://example.com#> .
 
-            :something a :publication ;
-                rdfs:label "Paper title" ;
-                dc:hasIdentifier doi:10.1137\\/1.9781611970937 .
+            :foo :something :ab\\/cd .
             """;
-        assertThatCode( () -> modelFromString( modelString ) ).doesNotThrowAnyException();
+        final Model model = modelFromString( modelString );
+        final FormattingStyle style = FormattingStyle.builder().build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final Model resultModel = modelFromString( result );
+
+        final Resource foo = ResourceFactory.createResource( "http://example.com#foo" );
+        final Statement fooStatement = resultModel.listStatements( foo, null, (RDFNode) null ).nextStatement();
+        assertThat( fooStatement.getObject().asResource().getURI() ).isEqualTo( "http://example.com#ab/cd" );
     }
 
     private Model modelFromString( final String content ) {
