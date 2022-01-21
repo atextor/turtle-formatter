@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.2.
+current version is 1.2.3.
 
 **Current Status**: The library is feature-complete.
 
@@ -126,13 +126,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.2</version>
+  <version>1.2.3</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.2'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.3'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.2")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.3")`
 
 ### Calling the formatter
 
@@ -654,6 +654,8 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.3:
+  * Bugfix: Special characters in local names (curies) and literals are properly escaped
 * 1.2.2:
   * Enable writing URIs with an empty base: use `TurtleFormatter.EMPTY_BASE` as
     value for "base" when reading a model using Jena's `model.read()`
