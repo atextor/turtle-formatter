@@ -499,11 +499,14 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    public void testEscapedLocalName() {
+    public void testEscapedLocalNameAndEscapedString() {
         final String modelString = """
             @prefix : <http://example.com#> .
 
             :foo :something :ab\\/cd .
+            :bar :something "ab\\\\cd" .
+            :baz :something "ab\\"cd" .
+            :baz2 :something \"""ab"cd\""" .
             """;
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder().build();
@@ -512,9 +515,23 @@ public class TurtleFormatterTest {
         final String result = formatter.apply( model );
         final Model resultModel = modelFromString( result );
 
+        assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+
         final Resource foo = ResourceFactory.createResource( "http://example.com#foo" );
         final Statement fooStatement = resultModel.listStatements( foo, null, (RDFNode) null ).nextStatement();
         assertThat( fooStatement.getObject().asResource().getURI() ).isEqualTo( "http://example.com#ab/cd" );
+
+        final Resource bar = ResourceFactory.createResource( "http://example.com#bar" );
+        final Statement barStatement = resultModel.listStatements( bar, null, (RDFNode) null ).nextStatement();
+        assertThat( barStatement.getObject().asLiteral().getString() ).isEqualTo( "ab\\cd" );
+
+        final Resource baz = ResourceFactory.createResource( "http://example.com#baz" );
+        final Statement bazStatement = resultModel.listStatements( baz, null, (RDFNode) null ).nextStatement();
+        assertThat( bazStatement.getObject().asLiteral().getString() ).isEqualTo( "ab\"cd" );
+
+        final Resource baz2 = ResourceFactory.createResource( "http://example.com#baz2" );
+        final Statement baz2Statement = resultModel.listStatements( baz2, null, (RDFNode) null ).nextStatement();
+        assertThat( baz2Statement.getObject().asLiteral().getString() ).isEqualTo( "ab\"cd" );
     }
 
     private Model modelFromString( final String content ) {

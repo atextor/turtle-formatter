@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
@@ -47,6 +46,14 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
      * Reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
      */
     private static final Pattern RESERVED_CHARACTER_ESCAPE_SEQUENCES = Pattern.compile( "[~.\\-!$&'()*+,;=/?#@%_]" );
+
+    /**
+     * String escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
+     * Note that \n is not in the pattern, because it is serialized literally, in a triple-quoted string.
+     * ' (single quote) is not in the pattern, because we never write single quoted strings and therefore don't
+     * need to escape single quotes.
+     */
+    private static final Pattern STRING_ESCAPE_SEQUENCES = Pattern.compile( "[\t\b\r\f\"\\\\]" );
 
     private final FormattingStyle style;
 
@@ -458,7 +465,18 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     private String quoteAndEscape( final RDFNode node ) {
         final String value = node.asNode().getLiteralLexicalForm();
         final String quote = value.contains( "\n" ) || value.contains( "\"" ) ? "\"\"\"" : "\"";
-        return quote + value + quote;
+        final Map<String, String> characterReplacements = HashMap.of(
+            "\t", "\\t",
+            "\b", "\\b",
+            "\r", "\\r",
+            "\f", "\\f",
+            "\"", quote.equals( "\"" ) ? "\\\"" : "\"", // Don't escape quotes in triple-quoted strings
+            "\\", "\\\\\\\\"
+        );
+
+        final String escapedValue = STRING_ESCAPE_SEQUENCES.matcher( value ).replaceAll( match ->
+            characterReplacements.getOrElse( match.group(), match.group() ) );
+        return quote + escapedValue + quote;
     }
 
     private State writeRdfNode( final RDFNode node, final State state ) {
