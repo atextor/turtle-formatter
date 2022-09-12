@@ -534,6 +534,40 @@ public class TurtleFormatterTest {
         assertThat( baz2Statement.getObject().asLiteral().getString() ).isEqualTo( "ab\"cd" );
     }
 
+    @Test
+    public void testPrefixEscapeCharacters() {
+        final String modelString = """
+            @prefix foo-bar: <http://example.com#> .
+            @prefix foo_bar: <http://example2.com#> .
+            @prefix ä_1: <http://example3.com#> .
+
+            foo-bar:foo foo-bar:foo "value1" .
+            foo_bar:bar foo_bar:bar "value2" .
+            ä_1:baz ä_1:baz "value3" .
+            """;
+        final Model model = modelFromString( modelString );
+        final FormattingStyle style = FormattingStyle.builder().build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        final Model resultModel = modelFromString( result );
+
+        assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+
+        final Resource subject1 = ResourceFactory.createResource( "http://example.com#foo" );
+        final Statement subject1Statement =
+            resultModel.listStatements( subject1, null, (RDFNode) null ).nextStatement();
+        assertThat( subject1Statement.getObject().asLiteral().getString() ).isEqualTo( "value1" );
+
+        final Resource subject2 = ResourceFactory.createResource( "http://example2.com#bar" );
+        final Statement subject2Statement = resultModel.listStatements( subject2, null, (RDFNode) null ).nextStatement();
+        assertThat( subject2Statement.getObject().asLiteral().getString() ).isEqualTo( "value2" );
+
+        final Resource subject3 = ResourceFactory.createResource( "http://example3.com#baz" );
+        final Statement subject3Statement = resultModel.listStatements( subject3, null, (RDFNode) null ).nextStatement();
+        assertThat( subject3Statement.getObject().asLiteral().getString() ).isEqualTo( "value3" );
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );

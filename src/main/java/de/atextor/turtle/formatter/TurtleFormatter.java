@@ -198,8 +198,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State buildInitialState( final Model model, final OutputStream outputStream,
-                                     final PrefixMapping prefixMapping,
-                                     final Comparator<Property> predicateOrder ) {
+        final PrefixMapping prefixMapping,
+        final Comparator<Property> predicateOrder ) {
         return Stream
             .ofAll( anonymousResourcesThatNeedAnId( model ) )
             .zipWithIndex()
@@ -284,8 +284,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeDelimiter( final String delimiter, final FormattingStyle.GapStyle before,
-                                  final FormattingStyle.GapStyle after, final String indentation,
-                                  final State state ) {
+        final FormattingStyle.GapStyle after, final String indentation,
+        final State state ) {
         final State beforeState = switch ( before ) {
             case SPACE -> state.lastCharacter.equals( " " ) ? state : state.write( " " );
             case NOTHING -> state;
@@ -305,7 +305,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeSemicolon( final State state, final boolean omitLineBreak,
-                                  final boolean omitSpaceBeforeSemicolon, final String nextLineIndentation ) {
+        final boolean omitSpaceBeforeSemicolon, final String nextLineIndentation ) {
         final FormattingStyle.GapStyle beforeSemicolon = omitSpaceBeforeSemicolon ? FormattingStyle.GapStyle.NOTHING :
             style.beforeSemicolon;
         final FormattingStyle.GapStyle afterSemicolon = omitLineBreak ? FormattingStyle.GapStyle.NOTHING :
@@ -419,7 +419,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return "<" + uriWithoutEmptyBase + ">";
         } else {
             // Local name: https://www.w3.org/TR/turtle/#grammar-production-PN_LOCAL
-            return escapeLocalName( shortForm );
+            final String[] prefixedName = shortForm.split( ":" );
+            return prefixedName[0] + ":" + escapeLocalName( prefixedName[1] );
         }
     }
 
@@ -539,8 +540,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeProperty( final Resource subject, final Property predicate, final boolean firstProperty,
-                                 final boolean lastProperty, final int alignment,
-                                 final String gapAfterPredicate, final State state ) {
+        final boolean lastProperty, final int alignment,
+        final String gapAfterPredicate, final State state ) {
         final Set<RDFNode> objects =
             Stream.ofAll( () -> subject.listProperties( predicate ) ).map( Statement::getObject ).toSet();
 
@@ -641,7 +642,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
 
         public State( final OutputStream outputStream, final Model model, final Comparator<Property> predicateOrder,
-                      final PrefixMapping prefixMapping ) {
+            final PrefixMapping prefixMapping ) {
             this( outputStream, model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0, "" );
         }
 
