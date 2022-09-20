@@ -5,7 +5,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TurtleFormatterTest {
@@ -255,8 +256,8 @@ public class TurtleFormatterTest {
         final Model model = modelFromString( modelString );
 
         final String ex = "http://example.com/";
-        final Property foo = ResourceFactory.createProperty( ex + "foo" );
-        final Property bar = ResourceFactory.createProperty( ex + "bar" );
+        final Property foo = createProperty( ex + "foo" );
+        final Property bar = createProperty( ex + "bar" );
         final FormattingStyle style = FormattingStyle.builder()
             .knownPrefixes( Set.of() )
             .predicateOrder( List.of( foo, bar ) )
@@ -280,9 +281,9 @@ public class TurtleFormatterTest {
         final Model model = modelFromString( modelString );
 
         final String ex = "http://example.com/";
-        final Property foo = ResourceFactory.createProperty( ex + "foo" );
-        final Property bar = ResourceFactory.createProperty( ex + "bar" );
-        final Property baz = ResourceFactory.createProperty( ex + "baz" );
+        final Property foo = createProperty( ex + "foo" );
+        final Property bar = createProperty( ex + "bar" );
+        final Property baz = createProperty( ex + "baz" );
         final FormattingStyle style = FormattingStyle.builder()
             .knownPrefixes( Set.of() )
             .predicateOrder( List.of( foo, bar, baz ) )
@@ -310,8 +311,8 @@ public class TurtleFormatterTest {
         final Model model = modelFromString( modelString );
 
         final String ex = "http://example.com/";
-        final Property foo = ResourceFactory.createProperty( ex + "foo" );
-        final Property bar = ResourceFactory.createProperty( ex + "bar" );
+        final Property foo = createProperty( ex + "foo" );
+        final Property bar = createProperty( ex + "bar" );
         final FormattingStyle style = FormattingStyle.builder()
             .knownPrefixes( Set.of() )
             .predicateOrder( List.of( RDF.type, foo, bar ) )
@@ -517,19 +518,19 @@ public class TurtleFormatterTest {
 
         assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
 
-        final Resource foo = ResourceFactory.createResource( "http://example.com#foo" );
+        final Resource foo = createResource( "http://example.com#foo" );
         final Statement fooStatement = resultModel.listStatements( foo, null, (RDFNode) null ).nextStatement();
         assertThat( fooStatement.getObject().asResource().getURI() ).isEqualTo( "http://example.com#ab/cd" );
 
-        final Resource bar = ResourceFactory.createResource( "http://example.com#bar" );
+        final Resource bar = createResource( "http://example.com#bar" );
         final Statement barStatement = resultModel.listStatements( bar, null, (RDFNode) null ).nextStatement();
         assertThat( barStatement.getObject().asLiteral().getString() ).isEqualTo( "ab\\cd" );
 
-        final Resource baz = ResourceFactory.createResource( "http://example.com#baz" );
+        final Resource baz = createResource( "http://example.com#baz" );
         final Statement bazStatement = resultModel.listStatements( baz, null, (RDFNode) null ).nextStatement();
         assertThat( bazStatement.getObject().asLiteral().getString() ).isEqualTo( "ab\"cd" );
 
-        final Resource baz2 = ResourceFactory.createResource( "http://example.com#baz2" );
+        final Resource baz2 = createResource( "http://example.com#baz2" );
         final Statement baz2Statement = resultModel.listStatements( baz2, null, (RDFNode) null ).nextStatement();
         assertThat( baz2Statement.getObject().asLiteral().getString() ).isEqualTo( "ab\"cd" );
     }
@@ -540,10 +541,18 @@ public class TurtleFormatterTest {
             @prefix foo-bar: <http://example.com#> .
             @prefix foo_bar: <http://example2.com#> .
             @prefix ä_1: <http://example3.com#> .
+            @prefix foo: <http://example4.com#> .
 
             foo-bar:foo foo-bar:foo "value1" .
             foo_bar:bar foo_bar:bar "value2" .
             ä_1:baz ä_1:baz "value3" .
+            foo:some-thing foo:some-thing "x" .
+            foo:some.thing foo:some.thing "x" .
+            foo:some_thing foo:some_thing "x" .
+            foo:some\\*thing foo:some\\*thing "x" .
+            foo:some\\?thing foo:some\\?thing "x" .
+            foo:some\\#thing foo:some\\#thing "x" .
+            foo:some\\@thing foo:some\\@thing "x" .
             """;
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder().build();
@@ -552,20 +561,42 @@ public class TurtleFormatterTest {
         final String result = formatter.apply( model );
         final Model resultModel = modelFromString( result );
 
+        // Should not be escaped: dashes and underscores in prefix part of local names
+        assertThat( result ).contains( "foo-bar:foo" );
+        assertThat( result ).contains( "foo_bar:bar" );
+        // Should not be escaped: dashes and underscores in name part of local names
+        assertThat( result ).contains( "foo:some-thing" );
+        assertThat( result ).contains( "foo:some_thing" );
+        // Should be escaped: other special characters in the name part of local names
+        assertThat( result ).contains( "foo:some\\*thing" );
+        assertThat( result ).contains( "foo:some\\?thing" );
+        assertThat( result ).contains( "foo:some\\#thing" );
+        assertThat( result ).contains( "foo:some\\@thing" );
+
         assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
 
-        final Resource subject1 = ResourceFactory.createResource( "http://example.com#foo" );
+        final Resource subject1 = createResource( "http://example.com#foo" );
         final Statement subject1Statement =
             resultModel.listStatements( subject1, null, (RDFNode) null ).nextStatement();
         assertThat( subject1Statement.getObject().asLiteral().getString() ).isEqualTo( "value1" );
 
-        final Resource subject2 = ResourceFactory.createResource( "http://example2.com#bar" );
-        final Statement subject2Statement = resultModel.listStatements( subject2, null, (RDFNode) null ).nextStatement();
+        final Resource subject2 = createResource( "http://example2.com#bar" );
+        final Statement subject2Statement = resultModel.listStatements( subject2, null, (RDFNode) null )
+            .nextStatement();
         assertThat( subject2Statement.getObject().asLiteral().getString() ).isEqualTo( "value2" );
 
-        final Resource subject3 = ResourceFactory.createResource( "http://example3.com#baz" );
-        final Statement subject3Statement = resultModel.listStatements( subject3, null, (RDFNode) null ).nextStatement();
+        final Resource subject3 = createResource( "http://example3.com#baz" );
+        final Statement subject3Statement = resultModel.listStatements( subject3, null, (RDFNode) null )
+            .nextStatement();
         assertThat( subject3Statement.getObject().asLiteral().getString() ).isEqualTo( "value3" );
+
+        for ( final String namePart :
+            List.of( "some-thing", "some_thing", "some*thing", "some?thing", "some@thing", "some#thing" ) ) {
+            final Resource resource = createResource( "http://example4.com#" + namePart );
+            final Statement statement = resultModel.listStatements( resource, null, (RDFNode) null )
+                .nextStatement();
+            assertThat( statement.getObject().asLiteral().getString() ).isEqualTo( "x" );
+        }
     }
 
     private Model modelFromString( final String content ) {

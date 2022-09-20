@@ -44,8 +44,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     /**
      * Reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
+     *
+     * Note that since the Turtle grammar rules allow dashes, underscores and full stops to be either escaped
+     * or not escaped in the name part of local names, they are removed from the pattern string so that they
+     * are printed unescaped.
      */
-    private static final Pattern RESERVED_CHARACTER_ESCAPE_SEQUENCES = Pattern.compile( "[~.\\-!$&'()*+,;=/?#@%_]" );
+    private static final Pattern RESERVED_CHARACTER_ESCAPE_SEQUENCES = Pattern.compile( "[~\\!$&'()*+,;=/?#@%]" );
 
     /**
      * String escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
