@@ -1,13 +1,5 @@
 package de.atextor.turtle.formatter;
 
-import io.vavr.Tuple2;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.HashSet;
-import io.vavr.collection.List;
-import io.vavr.collection.Map;
-import io.vavr.collection.Set;
-import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.With;
@@ -30,9 +22,17 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
 
@@ -44,7 +44,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     /**
      * Reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
-     *
+     * <p>
      * Note that since the Turtle grammar rules allow dashes, underscores and full stops to be either escaped
      * or not escaped in the name part of local names, they are removed from the pattern string so that they
      * are printed unescaped.
@@ -67,7 +67,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private final java.nio.charset.Charset encoding;
 
-    private final Comparator<Tuple2<String, String>> prefixOrder;
+    private final Comparator<Map.Entry<String, String>> prefixOrder;
 
     private final Comparator<RDFNode> objectOrder;
 
@@ -93,11 +93,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             case UTF_16_LE -> StandardCharsets.UTF_16LE;
         };
 
-        prefixOrder = Comparator.<Tuple2<String, String>>comparingInt( entry ->
-            style.prefixOrder.contains( entry._1() ) ?
-                style.prefixOrder.indexOf( entry._1() ) :
+        prefixOrder = Comparator.<Map.Entry<String, String>>comparingInt( entry ->
+            style.prefixOrder.contains( entry.getKey() ) ?
+                style.prefixOrder.indexOf( entry.getKey() ) :
                 Integer.MAX_VALUE
-        ).thenComparing( Tuple2::_1 );
+        ).thenComparing( Map.Entry::getKey );
 
         objectOrder = Comparator.<RDFNode>comparingInt( object ->
             style.objectOrder.contains( object ) ?
@@ -107,11 +107,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private static List<Statement> statements( final Model model ) {
-        return List.ofAll( model.listStatements().toList() );
+        return model.listStatements().toList();
     }
 
     private static List<Statement> statements( final Model model, final Property predicate, final RDFNode object ) {
-        return List.ofAll( model.listStatements( null, predicate, object ).toList() );
+        return model.listStatements( null, predicate, object ).toList();
     }
 
     @Override
@@ -161,55 +161,64 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeAnonymousResources( final State state ) {
-        return List.ofAll( state.identifiedAnonymousResources.keySet() )
-            .foldLeft( state, ( currentState, resource ) -> {
-                if ( !resource.listProperties().hasNext() ) {
-                    return currentState;
-                }
-                return writeSubject( resource, currentState.withIndentationLevel( 0 ) );
-            } );
+        State s = state;
+        for ( final Resource r : state.identifiedAnonymousResources.keySet() ) {
+            if ( !r.listProperties().hasNext() ) {
+                continue;
+            }
+            s = writeSubject( r, s.withIndentationLevel( 0 ) );
+        }
+        return s;
     }
 
     private State writeNamedResources( final State state, final List<Statement> statements ) {
-        return statements
-            .map( Statement::getSubject )
-            .foldLeft( state, ( currentState, resource ) -> {
-                if ( !resource.listProperties().hasNext() || currentState.visitedResources.contains( resource ) ) {
-                    return currentState;
-                }
-                if ( resource.isURIResource() ) {
-                    return writeSubject( resource, currentState.withIndentationLevel( 0 ) );
-                }
-                final State resourceWritten = writeAnonymousResource( resource, currentState
-                    .withIndentationLevel( 0 ) );
-                final boolean omitSpaceBeforeDelimiter = !currentState.identifiedAnonymousResources.keySet()
-                    .contains( resource );
-                return writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
-            } );
+        State currentState = state;
+        for ( final Statement statement : statements ) {
+            final Resource resource = statement.getSubject();
+            if ( !resource.listProperties().hasNext() || currentState.visitedResources.contains( resource ) ) {
+                continue;
+            }
+            if ( resource.isURIResource() ) {
+                currentState = writeSubject( resource, currentState.withIndentationLevel( 0 ) );
+                continue;
+            }
+            final State resourceWritten = writeAnonymousResource( resource, currentState
+                .withIndentationLevel( 0 ) );
+            final boolean omitSpaceBeforeDelimiter = !currentState.identifiedAnonymousResources.keySet()
+                .contains( resource );
+            currentState = writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
+        }
+        return currentState;
     }
 
     private List<Statement> determineStatements( final Model model, final Comparator<Statement> subjectComparator ) {
-        final List<Statement> wellKnownSubjects = List.ofAll( style.subjectOrder ).flatMap( subjectType ->
-            statements( model, RDF.type, subjectType ).sorted( subjectComparator ) );
-        final List<Statement> otherSubjects = statements( model )
+        final List<Statement> wellKnownSubjects = style.subjectOrder.stream().flatMap( subjectType ->
+            statements( model, RDF.type, subjectType ).stream().sorted( subjectComparator ) ).toList();
+
+        final List<Statement> otherSubjects = statements( model ).stream()
             .filter( statement -> !( statement.getPredicate().equals( RDF.type )
                 && statement.getObject().isResource()
                 && style.subjectOrder.contains( statement.getObject().asResource() ) ) )
-            .sorted( subjectComparator );
-        return wellKnownSubjects.appendAll( otherSubjects )
+            .sorted( subjectComparator )
+            .toList();
+
+        return Stream.concat( wellKnownSubjects.stream(), otherSubjects.stream() )
             .filter( statement -> !( statement.getSubject().isAnon()
-                && model.contains( null, null, statement.getSubject() ) ) );
+                && model.contains( null, null, statement.getSubject() ) ) )
+            .toList();
     }
 
     private State buildInitialState( final Model model, final OutputStream outputStream,
-        final PrefixMapping prefixMapping,
-        final Comparator<Property> predicateOrder ) {
-        return Stream
-            .ofAll( anonymousResourcesThatNeedAnId( model ) )
-            .zipWithIndex()
-            .map( entry -> new Tuple2<>( entry._1(), style.anonymousNodeIdGenerator.apply( entry._1(), entry._2() ) ) )
-            .foldLeft( new State( outputStream, model, predicateOrder, prefixMapping ), ( state, entry ) ->
-                state.withIdentifiedAnonymousResource( entry._1(), entry._2() ) );
+        final PrefixMapping prefixMapping, final Comparator<Property> predicateOrder ) {
+
+        State currentState = new State( outputStream, model, predicateOrder, prefixMapping );
+        int i = 0;
+        for ( final Resource r : anonymousResourcesThatNeedAnId( model ) ) {
+            final String s = style.anonymousNodeIdGenerator.apply( r, i );
+            currentState = currentState.withIdentifiedAnonymousResource( r, s );
+            i++;
+        }
+        return currentState;
     }
 
     /**
@@ -220,25 +229,27 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
      * @return the set of anonymous resources that are referred to more than once
      */
     private Set<Resource> anonymousResourcesThatNeedAnId( final Model model ) {
-        return List.ofAll( model::listObjects )
+        return model.listObjects().toList().stream()
             .filter( RDFNode::isResource )
             .map( RDFNode::asResource )
             .filter( RDFNode::isAnon )
-            .filter( object -> statements( model, null, object ).toList().size() > 1 )
-            .toSet();
+            .filter( object -> statements( model, null, object ).size() > 1 )
+            .collect( Collectors.toSet() );
     }
 
     private PrefixMapping buildPrefixMapping( final Model model ) {
-        final Map<String, String> prefixMap = Stream.ofAll( style.knownPrefixes )
+        final Map<String, String> prefixMap = style.knownPrefixes.stream()
             .filter( knownPrefix -> model.getNsPrefixURI( knownPrefix.prefix() ) == null )
-            .toMap( FormattingStyle.KnownPrefix::prefix, knownPrefix -> knownPrefix.iri().toString() );
+            .collect( Collectors.toMap( FormattingStyle.KnownPrefix::prefix,
+                knownPrefix -> knownPrefix.iri().toString() ) );
         return PrefixMapping.Factory.create().setNsPrefixes( model.getNsPrefixMap() )
-            .setNsPrefixes( prefixMap.toJavaMap() );
+            .setNsPrefixes( prefixMap );
     }
 
     private State writePrefixes( final State state ) {
-        final Map<String, String> prefixes = HashMap.ofAll( state.prefixMapping.getNsPrefixMap() );
-        final int maxPrefixLength = prefixes.keySet().map( String::length ).max().getOrElse( 0 );
+        final Map<String, String> prefixes = state.prefixMapping.getNsPrefixMap();
+        final int maxPrefixLength =
+            prefixes.keySet().stream().map( String::length ).max( Integer::compareTo ).orElse( 0 );
         final String prefixFormat = switch ( style.alignPrefixes ) {
             case OFF -> "@prefix %s: <%s>" + beforeDot + ".%n";
             case LEFT -> "@prefix %-" + maxPrefixLength + "s: <%s>" + beforeDot + ".%n";
@@ -246,29 +257,35 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         };
 
         final List<String> urisInModel = allUsedUris( state.model );
-        final State prefixesWritten = prefixes.toStream().sorted( prefixOrder )
-            .filter( entry -> style.keepUnusedPrefixes ||
-                urisInModel.find( resource -> resource.startsWith( entry._2() ) ).isDefined() )
-            .foldLeft( state, ( newState, entry ) ->
-                newState.write( String.format( prefixFormat, entry._1(), entry._2() ) ) );
 
-        return prefixesWritten.newLine();
+        final List<Map.Entry<String, String>> entries = prefixes.entrySet().stream().sorted( prefixOrder )
+            .filter( entry -> style.keepUnusedPrefixes ||
+                urisInModel.stream().anyMatch( resource -> resource.startsWith( entry.getValue() ) ) )
+            .toList();
+        State currentState = state;
+        for ( final Map.Entry<String, String> entry : entries ) {
+            currentState = currentState.write( String.format( prefixFormat, entry.getKey(), entry.getValue() ) );
+        }
+        currentState = currentState.newLine();
+        return currentState;
     }
 
     private List<String> allUsedUris( final Model model ) {
-        return List.ofAll( model::listStatements )
-            .flatMap( statement -> List.of( statement.getSubject(), statement.getPredicate(), statement.getObject() ) )
-            .<Option<String>>map( rdfNode -> {
+        return model.listStatements().toList().stream()
+            .flatMap( statement -> Stream.of( statement.getSubject(), statement.getPredicate(),
+                statement.getObject() ) )
+            .<Optional<String>>map( rdfNode -> {
                 if ( rdfNode.isURIResource() ) {
-                    return Option.of( rdfNode.asResource().getURI() );
+                    return Optional.of( rdfNode.asResource().getURI() );
                 }
                 if ( rdfNode.isLiteral() ) {
-                    return Option.of( rdfNode.asLiteral().getDatatypeURI() );
+                    return Optional.of( rdfNode.asLiteral().getDatatypeURI() );
                 }
-                return Option.none();
+                return Optional.empty();
             } )
-            .filter( Option::isDefined )
-            .map( Option::get );
+            .filter( Optional::isPresent )
+            .map( Optional::get )
+            .toList();
     }
 
     private String indent( final int level ) {
@@ -357,16 +374,17 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final State opened = writeDelimiter( "(", style.beforeOpeningParenthesis, afterOpeningParenthesis,
             continuationIndent( state.indentationLevel ), state );
         final java.util.List<RDFNode> elementList = resource.as( RDFList.class ).asJavaList();
-        final State elementsWritten = List.ofAll( elementList ).zipWithIndex()
-            .foldLeft( opened, ( currentState, indexedElement ) -> {
-                final RDFNode element = indexedElement._1();
-                final int index = indexedElement._2();
-                final boolean firstElement = index == 0;
-                return writeListElement( element, firstElement, currentState );
-            } );
+
+        int index = 0;
+        State currentState = opened;
+        for ( final RDFNode element : elementList ) {
+            final boolean firstElement = index == 0;
+            currentState = writeListElement( element, firstElement, currentState );
+            index++;
+        }
 
         final State finalLineBreakWritten = style.wrapListItems == FormattingStyle.WrappingStyle.ALWAYS ?
-            elementsWritten.newLine().write( indent( elementsWritten.indentationLevel ) ) : elementsWritten;
+            currentState.newLine().write( indent( currentState.indentationLevel ) ) : currentState;
 
         return writeDelimiter( ")", style.beforeClosingParenthesis, style.afterClosingParenthesis,
             continuationIndent( state.indentationLevel ), finalLineBreakWritten );
@@ -392,7 +410,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private State writeAnonymousResource( final Resource resource, final State state ) {
         if ( state.identifiedAnonymousResources.keySet().contains( resource ) ) {
-            return state.write( state.identifiedAnonymousResources.getOrElse( resource, "" ) );
+            return state.write( state.identifiedAnonymousResources.getOrDefault( resource, "" ) );
         }
 
         if ( !state.model.contains( resource, null, (RDFNode) null ) ) {
@@ -470,7 +488,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     private String quoteAndEscape( final RDFNode node ) {
         final String value = node.asNode().getLiteralLexicalForm();
         final String quote = value.contains( "\n" ) || value.contains( "\"" ) ? "\"\"\"" : "\"";
-        final Map<String, String> characterReplacements = HashMap.of(
+        final Map<String, String> characterReplacements = Map.of(
             "\t", "\\t",
             "\b", "\\b",
             "\r", "\\r",
@@ -480,7 +498,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         );
 
         final String escapedValue = STRING_ESCAPE_SEQUENCES.matcher( value ).replaceAll( match ->
-            characterReplacements.getOrElse( match.group(), match.group() ) );
+            characterReplacements.getOrDefault( match.group(), match.group() ) );
         return quote + escapedValue + quote;
     }
 
@@ -520,34 +538,31 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final int predicateAlignment = style.firstPredicateInNewLine ? style.indentSize : gapAfterSubject.alignment;
 
         // predicates and objects
-        final Set<Property> properties = Stream.ofAll( resource::listProperties )
-            .map( Statement::getPredicate ).toSet();
+        final Set<Property> properties = resource.listProperties().mapWith( Statement::getPredicate ).toSet();
 
-        final int maxPropertyWidth = properties.map( property ->
-            uriResource( property, state ) ).map( String::length ).max().getOrElse( 0 );
+        final int maxPropertyWidth = properties.stream().map( property ->
+            uriResource( property, state ) ).map( String::length ).max( Integer::compareTo ).orElse( 0 );
 
-        return Stream
-            .ofAll( properties )
-            .sorted( state.predicateOrder )
-            .zipWithIndex()
-            .foldLeft( gapAfterSubject.addIndentationLevel(), ( currentState, indexedProperty ) -> {
-                final Property property = indexedProperty._1();
-                final int index = indexedProperty._2();
-                final boolean firstProperty = index == 0;
-                final boolean lastProperty = index == properties.size() - 1;
-                final int propertyWidth = uriResource( property, currentState ).length();
-                final String gapAfterPredicate = style.alignObjects ?
-                    " ".repeat( maxPropertyWidth - propertyWidth + 1 ) : " ";
-                return writeProperty( resource, property, firstProperty, lastProperty, predicateAlignment,
-                    gapAfterPredicate, currentState );
-            } );
+        int index = 0;
+        State currentState = gapAfterSubject.addIndentationLevel();
+        for ( final Property property : properties.stream().sorted( state.predicateOrder ).toList() ) {
+            final boolean firstProperty = index == 0;
+            final boolean lastProperty = index == properties.size() - 1;
+            final int propertyWidth = uriResource( property, currentState ).length();
+            final String gapAfterPredicate = style.alignObjects ?
+                " ".repeat( maxPropertyWidth - propertyWidth + 1 ) : " ";
+            currentState = writeProperty( resource, property, firstProperty, lastProperty, predicateAlignment,
+                gapAfterPredicate, currentState );
+            index++;
+        }
+        return currentState;
     }
 
     private State writeProperty( final Resource subject, final Property predicate, final boolean firstProperty,
         final boolean lastProperty, final int alignment,
         final String gapAfterPredicate, final State state ) {
         final Set<RDFNode> objects =
-            Stream.ofAll( () -> subject.listProperties( predicate ) ).map( Statement::getObject ).toSet();
+            subject.listProperties( predicate ).mapWith( Statement::getObject ).toSet();
 
         final boolean useComma = ( style.useCommaByDefault && !style.noCommaForPredicate.contains( predicate ) )
             || ( !style.useCommaByDefault && style.commaForPredicate.contains( predicate ) );
@@ -579,47 +594,49 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final State predicateWrittenOnce = useComma ? writeProperty( predicate, predicateAlignment )
             .write( gapAfterPredicate ) : predicateAlignment;
 
-        return Stream
-            .ofAll( objects )
-            .sorted( objectOrder )
-            .zipWithIndex()
-            .foldLeft( predicateWrittenOnce, ( currentState, indexedObject ) -> {
-                final RDFNode object = indexedObject._1();
-                final int index = indexedObject._2();
-                final boolean lastObject = index == objects.size() - 1;
+        int index = 0;
+        State currentState = predicateWrittenOnce;
+        for ( final RDFNode object : objects.stream().sorted( objectOrder ).toList() ) {
+            final boolean lastObject = index == objects.size() - 1;
+            final State predicateWritten = useComma ? currentState :
+                writeProperty( predicate, currentState );
 
-                final State predicateWritten = useComma ? currentState :
-                    writeProperty( predicate, currentState );
+            final boolean isAnonWithBrackets = object.isAnon()
+                && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
+            final boolean isList = isList( object, predicateWritten );
+            final State spaceWritten = !isAnonWithBrackets && !isList && !useComma ?
+                predicateWritten.write( gapAfterPredicate ) :
+                predicateWritten;
 
-                final boolean isAnonWithBrackets = object.isAnon()
-                    && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                final boolean isList = isList( object, predicateWritten );
-                final State spaceWritten = !isAnonWithBrackets && !isList && !useComma ?
-                    predicateWritten.write( gapAfterPredicate ) :
-                    predicateWritten;
+            final State objectWritten = writeRdfNode( object, spaceWritten );
+            if ( useComma && !lastObject ) {
+                currentState = writeComma( objectWritten );
+                index++;
+                continue;
+            }
 
-                final State objectWritten = writeRdfNode( object, spaceWritten );
-                if ( useComma && !lastObject ) {
-                    return writeComma( objectWritten );
-                }
-
-                final boolean listWritten = isList && style.afterClosingParenthesis == FormattingStyle.GapStyle.NOTHING;
-                final boolean omitSpaceBeforeDelimiter =
-                    object.isResource()
-                        && object.isAnon()
-                        && !listWritten
-                        && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
-                if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 && !inBrackets ) {
-                    return writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();
-                }
-                final String nextLineIndentation =
-                    ( style.alignPredicates || ( subject.isAnon() ) )
-                        && !( !subject.isAnon() && !lastObject ) ? "" :
-                        indent( objectWritten.indentationLevel );
-                final State semicolonWritten = writeSemicolon( objectWritten, lastProperty && lastObject,
-                    omitSpaceBeforeDelimiter, nextLineIndentation );
-                return subject.isAnon() && lastProperty ? semicolonWritten.removeIndentationLevel() : semicolonWritten;
-            } );
+            final boolean listWritten = isList && style.afterClosingParenthesis == FormattingStyle.GapStyle.NOTHING;
+            final boolean omitSpaceBeforeDelimiter =
+                object.isResource()
+                    && object.isAnon()
+                    && !listWritten
+                    && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
+            if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 && !inBrackets ) {
+                currentState = writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();
+                index++;
+                continue;
+            }
+            final String nextLineIndentation =
+                ( style.alignPredicates || ( subject.isAnon() ) )
+                    && !( !subject.isAnon() && !lastObject ) ? "" :
+                    indent( objectWritten.indentationLevel );
+            final State semicolonWritten = writeSemicolon( objectWritten, lastProperty && lastObject,
+                omitSpaceBeforeDelimiter, nextLineIndentation );
+            currentState = subject.isAnon() && lastProperty ? semicolonWritten.removeIndentationLevel() :
+                semicolonWritten;
+            index++;
+        }
+        return currentState;
     }
 
     @Value
@@ -647,15 +664,19 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
         public State( final OutputStream outputStream, final Model model, final Comparator<Property> predicateOrder,
             final PrefixMapping prefixMapping ) {
-            this( outputStream, model, HashSet.empty(), HashMap.empty(), predicateOrder, prefixMapping, 0, 0, "" );
+            this( outputStream, model, Set.of(), Map.of(), predicateOrder, prefixMapping, 0, 0, "" );
         }
 
         public State withIdentifiedAnonymousResource( final Resource anonymousResource, final String id ) {
-            return withIdentifiedAnonymousResources( identifiedAnonymousResources.put( anonymousResource, id ) );
+            final Map<Resource, String> newMap = new HashMap<>( identifiedAnonymousResources );
+            newMap.put( anonymousResource, id );
+            return withIdentifiedAnonymousResources( newMap );
         }
 
         public State withVisitedResource( final Resource visitedResource ) {
-            return withVisitedResources( visitedResources.add( visitedResource ) );
+            final Set<Resource> newSet = new HashSet<>( visitedResources );
+            newSet.add( visitedResource );
+            return withVisitedResources( newSet );
         }
 
         public State addIndentationLevel() {
