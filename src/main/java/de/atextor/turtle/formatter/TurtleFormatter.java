@@ -161,14 +161,14 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeAnonymousResources( final State state ) {
-        State s = state;
-        for ( final Resource r : state.identifiedAnonymousResources.keySet() ) {
-            if ( !r.listProperties().hasNext() ) {
+        State currentState = state;
+        for ( final Resource resource : state.identifiedAnonymousResources.keySet() ) {
+            if ( !resource.listProperties().hasNext() ) {
                 continue;
             }
-            s = writeSubject( r, s.withIndentationLevel( 0 ) );
+            currentState = writeSubject( resource, currentState.withIndentationLevel( 0 ) );
         }
-        return s;
+        return currentState;
     }
 
     private State writeNamedResources( final State state, final List<Statement> statements ) {
@@ -182,27 +182,24 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 currentState = writeSubject( resource, currentState.withIndentationLevel( 0 ) );
                 continue;
             }
-            final State resourceWritten = writeAnonymousResource( resource, currentState
-                .withIndentationLevel( 0 ) );
-            final boolean omitSpaceBeforeDelimiter = !currentState.identifiedAnonymousResources.keySet()
-                .contains( resource );
+            final State resourceWritten = writeAnonymousResource( resource, currentState.withIndentationLevel( 0 ) );
+            final boolean omitSpaceBeforeDelimiter = !currentState.identifiedAnonymousResources.containsKey( resource );
             currentState = writeDot( resourceWritten, omitSpaceBeforeDelimiter ).newLine();
         }
         return currentState;
     }
 
     private List<Statement> determineStatements( final Model model, final Comparator<Statement> subjectComparator ) {
-        final List<Statement> wellKnownSubjects = style.subjectOrder.stream().flatMap( subjectType ->
-            statements( model, RDF.type, subjectType ).stream().sorted( subjectComparator ) ).toList();
+        final Stream<Statement> wellKnownSubjects = style.subjectOrder.stream().flatMap( subjectType ->
+            statements( model, RDF.type, subjectType ).stream().sorted( subjectComparator ) );
 
-        final List<Statement> otherSubjects = statements( model ).stream()
+        final Stream<Statement> otherSubjects = statements( model ).stream()
             .filter( statement -> !( statement.getPredicate().equals( RDF.type )
                 && statement.getObject().isResource()
                 && style.subjectOrder.contains( statement.getObject().asResource() ) ) )
-            .sorted( subjectComparator )
-            .toList();
+            .sorted( subjectComparator );
 
-        return Stream.concat( wellKnownSubjects.stream(), otherSubjects.stream() )
+        return Stream.concat( wellKnownSubjects, otherSubjects )
             .filter( statement -> !( statement.getSubject().isAnon()
                 && model.contains( null, null, statement.getSubject() ) ) )
             .toList();
@@ -409,7 +406,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeAnonymousResource( final Resource resource, final State state ) {
-        if ( state.identifiedAnonymousResources.keySet().contains( resource ) ) {
+        if ( state.identifiedAnonymousResources.containsKey( resource ) ) {
             return state.write( state.identifiedAnonymousResources.getOrDefault( resource, "" ) );
         }
 
@@ -524,7 +521,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
 
         // indent
-        final boolean isIdentifiedAnon = state.identifiedAnonymousResources.keySet().contains( resource );
+        final boolean isIdentifiedAnon = state.identifiedAnonymousResources.containsKey( resource );
         final boolean subjectsNeedsIdentation = !resource.isAnon() || isIdentifiedAnon;
         final State indentedSubject = subjectsNeedsIdentation ? state.write( indent( state.indentationLevel ) ) : state;
         // subject
@@ -570,7 +567,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final State wrappedPredicate = firstProperty && style.firstPredicateInNewLine && !subject.isAnon() ?
             state.newLine() : state;
 
-        final boolean isNamedAnon = state.identifiedAnonymousResources.keySet().contains( subject );
+        final boolean isNamedAnon = state.identifiedAnonymousResources.containsKey( subject );
         final boolean inBrackets = subject.isAnon() && !isNamedAnon;
 
         final boolean shouldIndentFirstPropertyByLevel = firstProperty &&
@@ -602,7 +599,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 writeProperty( predicate, currentState );
 
             final boolean isAnonWithBrackets = object.isAnon()
-                && !predicateWritten.identifiedAnonymousResources.keySet().contains( object.asResource() );
+                && !predicateWritten.identifiedAnonymousResources.containsKey( object.asResource() );
             final boolean isList = isList( object, predicateWritten );
             final State spaceWritten = !isAnonWithBrackets && !isList && !useComma ?
                 predicateWritten.write( gapAfterPredicate ) :
@@ -620,7 +617,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 object.isResource()
                     && object.isAnon()
                     && !listWritten
-                    && !currentState.identifiedAnonymousResources.keySet().contains( object.asResource() );
+                    && !currentState.identifiedAnonymousResources.containsKey( object.asResource() );
             if ( lastProperty && lastObject && objectWritten.indentationLevel == 1 && !inBrackets ) {
                 currentState = writeDot( objectWritten, omitSpaceBeforeDelimiter ).newLine();
                 index++;
