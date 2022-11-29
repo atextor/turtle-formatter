@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.5.
+current version is 1.2.6.
 
 **Current Status**: The library is feature-complete.
 
@@ -126,11 +126,11 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.5</version>
+  <version>1.2.6</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.5'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.6'`
 
 Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.5")`
 
@@ -654,6 +654,9 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.6:
+  * Fix typo in FormattingStyle property (`indentPredicates`)
+  * Fix alignment of repeated identical predicates
 * 1.2.5:
   * Dashes, underscores and full stops in the name part of local names are not
     escaped any more. Technically not a bug fix since both is valid, but it's
