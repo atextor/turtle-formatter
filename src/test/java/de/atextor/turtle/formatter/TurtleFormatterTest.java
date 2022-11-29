@@ -484,10 +484,10 @@ public class TurtleFormatterTest {
             :address a rdf:Property .
             :city a rdf:Property .
             :Max a :Person ;
-                :name "Max" ;
-                :address [
-                    :city "City Z"
-                ] .
+              :name "Max" ;
+              :address [
+                :city "City Z"
+              ] .
             """;
 
         final Model model = modelFromString( modelString );
@@ -497,6 +497,28 @@ public class TurtleFormatterTest {
         final String result = formatter.apply( model );
         final Model resultModel = modelFromString( result );
         assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
+    }
+
+    @Test
+    public void testRepeatedPredicates() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar [
+                :something "x" ;
+                :something "y" ;
+                :something "z" ;
+              ] .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        System.out.println( result );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
     @Test

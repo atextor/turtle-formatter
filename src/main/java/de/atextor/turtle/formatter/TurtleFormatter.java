@@ -623,13 +623,17 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 index++;
                 continue;
             }
-            final String nextLineIndentation =
-                ( style.alignPredicates || ( subject.isAnon() ) )
-                    && !( !subject.isAnon() && !lastObject ) ? "" :
-                    indent( objectWritten.indentationLevel );
+            final boolean doAlign = style.alignPredicates || subject.isAnon();
+            final boolean moreIdenticalPredicatesRemaining =
+                subject.listProperties( predicate ).toList().size() > 1 && !lastObject;
+            final boolean isAnonOrLastObject =
+                ( subject.isAnon() || lastObject ) && !moreIdenticalPredicatesRemaining;
+            final String nextLineIndentation = doAlign && isAnonOrLastObject ? ""
+                : indent( objectWritten.indentationLevel );
             final State semicolonWritten = writeSemicolon( objectWritten, lastProperty && lastObject,
                 omitSpaceBeforeDelimiter, nextLineIndentation );
-            currentState = subject.isAnon() && lastProperty ? semicolonWritten.removeIndentationLevel() :
+            currentState = subject.isAnon() && lastProperty && !moreIdenticalPredicatesRemaining ?
+                semicolonWritten.removeIndentationLevel() :
                 semicolonWritten;
             index++;
         }
