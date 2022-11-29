@@ -141,7 +141,7 @@ public class FormattingStyle {
     public int continuationIndentSize = 4;
 
     @Builder.Default
-    public boolean indentPrediates = true;
+    public boolean indentPredicates = true;
 
     @Builder.Default
     public boolean insertFinalNewline = true;
