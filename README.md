@@ -132,7 +132,7 @@ Add the following dependency to your Maven `pom.xml`:
 
 Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.6'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.5")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.6")`
 
 ### Calling the formatter
 
