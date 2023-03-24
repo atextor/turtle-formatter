@@ -3,6 +3,9 @@ package de.atextor.turtle.formatter;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.With;
+import org.apache.jena.atlas.io.AWriter;
+import org.apache.jena.atlas.lib.Pair;
+import org.apache.jena.irix.IRIException;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -11,6 +14,11 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.out.NodeFormatterTTL;
+import org.apache.jena.riot.system.PrefixLib;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapAdapter;
+import org.apache.jena.riot.system.PrefixMapBase;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.XSD;
@@ -43,19 +51,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
 
     /**
-     * Reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
+     * String escape sequences as described in <a href="https://www.w3.org/TR/turtle/#sec-escapes">Escape Sequences</a>.
      * <p>
-     * Note that since the Turtle grammar rules allow dashes, underscores and full stops to be either escaped
-     * or not escaped in the name part of local names, they are removed from the pattern string so that they
-     * are printed unescaped.
-     */
-    private static final Pattern RESERVED_CHARACTER_ESCAPE_SEQUENCES = Pattern.compile( "[~\\!$&'()*+,;=/?#@%]" );
-
-    /**
-     * String escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
      * Note that \n is not in the pattern, because it is serialized literally, in a triple-quoted string.
      * ' (single quote) is not in the pattern, because we never write single quoted strings and therefore don't
      * need to escape single quotes.
+     * </p>
      */
     private static final Pattern STRING_ESCAPE_SEQUENCES = Pattern.compile( "[\t\b\r\f\"\\\\]" );
 
@@ -434,23 +435,74 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final String uriWithoutEmptyBase = uri.startsWith( EMPTY_BASE ) ? uri.substring( EMPTY_BASE.length() ) : uri;
         final String shortForm = state.prefixMapping.shortForm( uriWithoutEmptyBase );
         if ( shortForm.equals( uriWithoutEmptyBase ) ) {
-            // RDF Term: https://www.w3.org/TR/turtle/#grammar-production-IRIREF
             return "<" + uriWithoutEmptyBase + ">";
-        } else {
-            // Local name: https://www.w3.org/TR/turtle/#grammar-production-PN_LOCAL
-            final String[] prefixedName = shortForm.split( ":" );
-            return prefixedName[0] + ":" + escapeLocalName( prefixedName[1] );
         }
+        // All other cases are delegated to Jena RIOT
+        final NodeFormatterTTL formatter = new NodeFormatterTTL( "", new CustomPrefixMap( state.prefixMapping ) );
+        final NodeFormatterSink sink = new NodeFormatterSink();
+        try {
+            formatter.formatURI( sink, uri );
+        } catch ( final IRIException exception ) {
+            // The formatter encountered an invalid IRI. This should not have happend in the first place, i.e.,
+            // it should not be present in the model. Since this should have been fixed by the parser, we handle
+            // it the same was as Jena Core: Still print it out.
+            return "<" + uri + ">";
+        }
+        return sink.buffer.toString();
     }
 
     /**
-     * Perform escaping of reserved character escape sequences as described in https://www.w3.org/TR/turtle/#sec-escapes
-     *
-     * @param localName the local name of an RDF resources
-     * @return the escaped localName
+     * Unfortunately, the logic in {@link PrefixMapAdapter#abbrev(String)} is broken and won't return a prefix
+     * even if one exists in the wrapped map; and the class is final, so we can't overwrite the method.
      */
-    private String escapeLocalName( final String localName ) {
-        return RESERVED_CHARACTER_ESCAPE_SEQUENCES.matcher( localName ).replaceAll( match -> "\\\\" + match.group() );
+    static class CustomPrefixMap extends PrefixMapBase implements PrefixMap {
+        private final PrefixMapping mapping;
+
+        public CustomPrefixMap( final PrefixMapping mapping ) {
+            this.mapping = mapping;
+        }
+
+        @Override
+        public String get( final String prefix ) {
+            return mapping.getNsPrefixURI( prefix );
+        }
+
+        @Override
+        public Map<String, String> getMapping() {
+            return mapping.getNsPrefixMap();
+        }
+
+        @Override
+        public void add( final String prefix, final String iriString ) {
+        }
+
+        @Override
+        public void delete( final String prefix ) {
+        }
+
+        @Override
+        public void clear() {
+        }
+
+        @Override
+        public boolean containsPrefix( final String prefix ) {
+            return mapping.getNsPrefixMap().containsKey( prefix );
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return mapping.getNsPrefixMap().isEmpty();
+        }
+
+        @Override
+        public int size() {
+            return mapping.getNsPrefixMap().size();
+        }
+
+        @Override
+        public Pair<String, String> abbrev( final String uriStr ) {
+            return PrefixLib.abbrev( this, uriStr );
+        }
     }
 
     private State writeUriResource( final Resource resource, final State state ) {
@@ -638,6 +690,63 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             index++;
         }
         return currentState;
+    }
+
+    static class NodeFormatterSink implements AWriter {
+        StringBuffer buffer = new StringBuffer();
+
+        @Override
+        public void write( final char ch ) {
+            buffer.append( ch );
+        }
+
+        @Override
+        public void write( final char[] cbuf ) {
+            buffer.append( cbuf );
+        }
+
+        @Override
+        public void write( final String string ) {
+            buffer.append( string );
+        }
+
+        @Override
+        public void print( final char ch ) {
+            write( ch );
+        }
+
+        @Override
+        public void print( final char[] cbuf ) {
+            write( cbuf );
+        }
+
+        @Override
+        public void print( final String string ) {
+            write( string );
+        }
+
+        @Override
+        public void printf( final String fmt, final Object... arg ) {
+            write( String.format( fmt, arg ) );
+        }
+
+        @Override
+        public void println( final String object ) {
+            write( String.format( "%s%n", object ) );
+        }
+
+        @Override
+        public void println() {
+            write( String.format( "%n" ) );
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
+        }
     }
 
     @Value

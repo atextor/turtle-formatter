@@ -573,8 +573,10 @@ public class TurtleFormatterTest {
             foo:some_thing foo:some_thing "x" .
             foo:some\\*thing foo:some\\*thing "x" .
             foo:some\\?thing foo:some\\?thing "x" .
-            foo:some\\#thing foo:some\\#thing "x" .
             foo:some\\@thing foo:some\\@thing "x" .
+            <http://example4.com#-10> foo:something "x" .
+            foo::another foo:test "x" .
+            foo:\\$10 foo:test "x" .
             """;
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder().build();
@@ -583,17 +585,19 @@ public class TurtleFormatterTest {
         final String result = formatter.apply( model );
         final Model resultModel = modelFromString( result );
 
-        // Should not be escaped: dashes and underscores in prefix part of local names
+        // Should not be escaped and should be local names: dashes and underscores in prefix part of local names
         assertThat( result ).contains( "foo-bar:foo" );
         assertThat( result ).contains( "foo_bar:bar" );
-        // Should not be escaped: dashes and underscores in name part of local names
+        assertThat( result ).contains( "foo::another" );
+        // Should not be escaped and should be local names: dashes and underscores in name part of local names
         assertThat( result ).contains( "foo:some-thing" );
         assertThat( result ).contains( "foo:some_thing" );
-        // Should be escaped: other special characters in the name part of local names
-        assertThat( result ).contains( "foo:some\\*thing" );
-        assertThat( result ).contains( "foo:some\\?thing" );
-        assertThat( result ).contains( "foo:some\\#thing" );
-        assertThat( result ).contains( "foo:some\\@thing" );
+        // Should be full URIs, since local names would be invalid
+        assertThat( result ).contains( "http://example4.com#some*thing" );
+        assertThat( result ).contains( "http://example4.com#some?thing" );
+        assertThat( result ).contains( "http://example4.com#some@thing" );
+        assertThat( result ).contains( "http://example4.com#-10" );
+        assertThat( result ).contains( "http://example4.com#$10" );
 
         assertThat( model.isIsomorphicWith( resultModel ) ).isTrue();
 
@@ -613,7 +617,7 @@ public class TurtleFormatterTest {
         assertThat( subject3Statement.getObject().asLiteral().getString() ).isEqualTo( "value3" );
 
         for ( final String namePart :
-            List.of( "some-thing", "some_thing", "some*thing", "some?thing", "some@thing", "some#thing" ) ) {
+            List.of( "some-thing", "some_thing", "some*thing", "some?thing", "some@thing" ) ) {
             final Resource resource = createResource( "http://example4.com#" + namePart );
             final Statement statement = resultModel.listStatements( resource, null, (RDFNode) null )
                 .nextStatement();

@@ -20,6 +20,7 @@ repositories {
 
 dependencies {
     implementation("org.apache.jena:jena-core:4.2.0")
+    implementation("org.apache.jena:jena-arq:4.2.0")
     implementation("org.slf4j:slf4j-api:1.7.32")
     compileOnly("org.projectlombok:lombok:1.18.22")
 
