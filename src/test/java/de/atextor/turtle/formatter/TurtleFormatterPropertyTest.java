@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class TurtleFormatterPropertyTest {
     @Provide
     Arbitrary<String> anyString() {
-        return Arbitraries.strings().ofMaxLength( 5 );
+        return Arbitraries.strings().all().ofMaxLength( 5 );
     }
 
     @Provide
@@ -64,9 +64,12 @@ public class TurtleFormatterPropertyTest {
         return Arbitraries.of(
             ResourceFactory.createTypedLiteral( "1", XSDDatatype.XSDint ),
             ResourceFactory.createTypedLiteral( "2", XSDDatatype.XSDlong ),
-            ResourceFactory.createTypedLiteral( "3", XSDDatatype.XSDbyte ),
+            ResourceFactory.createTypedLiteral( "3", XSDDatatype.XSDshort ),
             ResourceFactory.createTypedLiteral( "4", XSDDatatype.XSDbyte ),
-            ResourceFactory.createTypedLiteral( "5", XSDDatatype.XSDunsignedByte )
+            ResourceFactory.createTypedLiteral( "5", XSDDatatype.XSDunsignedByte ),
+            ResourceFactory.createTypedLiteral( "6", XSDDatatype.XSDunsignedInt ),
+            ResourceFactory.createTypedLiteral( "7", XSDDatatype.XSDunsignedLong ),
+            ResourceFactory.createTypedLiteral( "8", XSDDatatype.XSDunsignedShort )
         );
     }
 

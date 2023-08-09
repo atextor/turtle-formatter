@@ -109,13 +109,52 @@ public class TurtleFormatterTest {
 
             :foo08 :bar "something"@en .
 
-            :foo09 :bar \"""This contains a " quote\""" .
+            :foo09 :bar "This contains a \\" quote" .
 
             :foo10 :bar \"""This contains a
             linebreak\""" .
             """;
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder()
+            .knownPrefixes( Set.of() )
+            .quoteStyle( FormattingStyle.QuoteStyle.TRIPLE_QUOTES_FOR_MULTILINE )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    public void testQuotedStringsWithSingleQuotes() {
+        final String modelString = """
+            @prefix : <http://example.com/> .
+
+            :foo :bar "This contains and ends with a \\"quote\\"" ;
+              :bar2 "This contains a\\nlinebreak" ;
+              :bar3 "This contains \\t \\\\ \\b" .
+            """;
+        final Model model = modelFromString( modelString );
+        final FormattingStyle style = FormattingStyle.builder()
+            .quoteStyle( FormattingStyle.QuoteStyle.ALWAYS_SINGE_QUOTES )
+            .knownPrefixes( Set.of() )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @SuppressWarnings( "TextBlockMigration" )
+    @Test
+    public void testQuotedStringsWithTripleQuotes() {
+        // We'll put this in a regular string instead of a text block to make the escaping and the
+        // RDF triple quotes inside the string clearer
+        final String modelString = "@prefix : <http://example.com/> .\n" +
+                                   "\n" +
+                                   ":foo :bar \"\"\"This contains and ends with a \"quote\\\"\"\"\" ;\n" +
+                                   "  :bar2 \"\"\"This contains \\t \\\\ \\b\"\"\" .\n";
+        final Model model = modelFromString( modelString );
+        final FormattingStyle style = FormattingStyle.builder()
+            .quoteStyle( FormattingStyle.QuoteStyle.ALWAYS_TRIPLE_QUOTES )
             .knownPrefixes( Set.of() )
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );

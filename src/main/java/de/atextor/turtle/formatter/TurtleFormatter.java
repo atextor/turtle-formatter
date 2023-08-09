@@ -53,12 +53,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     /**
      * String escape sequences as described in <a href="https://www.w3.org/TR/turtle/#sec-escapes">Escape Sequences</a>.
      * <p>
-     * Note that \n is not in the pattern, because it is serialized literally, in a triple-quoted string.
      * ' (single quote) is not in the pattern, because we never write single quoted strings and therefore don't
      * need to escape single quotes.
      * </p>
      */
-    private static final Pattern STRING_ESCAPE_SEQUENCES = Pattern.compile( "[\t\b\r\f\"\\\\]" );
+    private static final Pattern STRING_ESCAPE_SEQUENCES = Pattern.compile( "[\t\b\n\r\f\"\\\\]" );
 
     private final FormattingStyle style;
 
@@ -536,19 +535,31 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private String quoteAndEscape( final RDFNode node ) {
         final String value = node.asNode().getLiteralLexicalForm();
-        final String quote = value.contains( "\n" ) || value.contains( "\"" ) ? "\"\"\"" : "\"";
+        final String quote = switch ( style.quoteStyle ) {
+            case ALWAYS_SINGE_QUOTES -> "\"";
+            case ALWAYS_TRIPLE_QUOTES -> "\"\"\"";
+            case TRIPLE_QUOTES_FOR_MULTILINE -> value.contains( "\n" ) ? "\"\"\"" : "\"";
+        };
+
         final Map<String, String> characterReplacements = Map.of(
-            "\t", "\\t",
-            "\b", "\\b",
-            "\r", "\\r",
-            "\f", "\\f",
-            "\"", quote.equals( "\"" ) ? "\\\"" : "\"", // Don't escape quotes in triple-quoted strings
+            "\t", "\\\\t",
+            "\b", "\\\\b",
+            "\r", "\\\\r",
+            "\f", "\\\\f",
+            "\n", quote.equals( "\"" ) ? "\\\\n" : "\n", // Don't escape line breaks in triple-quoted strings
+            "\"", quote.equals( "\"" ) ? "\\\\\"" : "\"", // Don't escape quotes in triple-quoted strings
             "\\", "\\\\\\\\"
         );
 
         final String escapedValue = STRING_ESCAPE_SEQUENCES.matcher( value ).replaceAll( match ->
             characterReplacements.getOrDefault( match.group(), match.group() ) );
-        return quote + escapedValue + quote;
+
+        // Special case: If the last character in the triple-quoted string is a quote, it must be escaped
+        // See https://github.com/atextor/turtle-formatter/issues/9
+        final String result = quote.equals( "\"\"\"" ) && escapedValue.endsWith( "\"" )
+            ? escapedValue.substring( 0, escapedValue.length() - 1 ) + "\\\""
+            : escapedValue;
+        return quote + result + quote;
     }
 
     private State writeRdfNode( final RDFNode node, final State state ) {

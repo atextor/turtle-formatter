@@ -108,6 +108,9 @@ public class FormattingStyle {
     public IndentStyle indentStyle = IndentStyle.SPACE;
 
     @Builder.Default
+    public QuoteStyle quoteStyle = QuoteStyle.TRIPLE_QUOTES_FOR_MULTILINE;
+
+    @Builder.Default
     public WrappingStyle wrapListItems = WrappingStyle.FOR_LONG_LINES;
 
     @Builder.Default
@@ -241,6 +244,12 @@ public class FormattingStyle {
         ALWAYS,
         FOR_LONG_LINES,
         NEVER
+    }
+
+    public enum QuoteStyle {
+        ALWAYS_SINGE_QUOTES,
+        TRIPLE_QUOTES_FOR_MULTILINE,
+        ALWAYS_TRIPLE_QUOTES
     }
 
     public record KnownPrefix(String prefix, URI iri) {
