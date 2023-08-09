@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.7.
+current version is 1.2.8.
 
 **Current Status**: The library is feature-complete.
 
@@ -126,13 +126,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.7</version>
+  <version>1.2.8</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.7'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.8'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.7")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.8")`
 
 ### Calling the formatter
 
@@ -327,7 +327,25 @@ automatically treated as `false`.
 
 </td>
 </tr>
+<tr>
+<td>
 
+`quoteStyle`
+
+</td>
+<td>
+
+`ALWAYS_SINGLE_QUOTES`, `TRIPLE_QUOTES_FOR_MULTILINE` or `ALWAYS_TRIPLE_QUOTES`.
+Determines which quotes should be used for literals. Triple-quoted strings can
+contain literal quotes and line breaks.
+
+</td>
+<td>
+
+`TRIPLE_QUOTES_FOR_MULTILINE`
+
+</td>
+</tr>
 <tr>
 <td>
 
@@ -654,6 +672,10 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.8:
+  * Bugfix: Quotes that are the last character in a triple-quoted string are
+    escaped correctly
+  * New style switch: `FormattingStyle.quoteStyle`
 * 1.2.7:
   * Bugfix: URIs and local names are formatted using Jena RIOT; no invalid local
     names are printed any longer
