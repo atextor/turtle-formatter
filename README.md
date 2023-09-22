@@ -184,7 +184,7 @@ The following options can be set on the FormattingStyle builder:
 <td>Set the URI that should be left out in formatting. If you don't care about
 this, don't change it and use the FormattingStyle's emptyRdfBase field as the
 base URI when loading/creating the model that will be formatted, see
-[calling the formatter](https://github.com/atextor/turtle-formatter#calling-the-formatter).
+<a href="#calling-the-formatter">calling the formatter</a>.
 
 </td>
 <td>urn:turtleformatter:internal</td>
