@@ -3,7 +3,7 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 plugins {
     java
     jacoco
-    id("com.github.ben-manes.versions") version "0.46.0"
+    id("com.github.ben-manes.versions") version "0.48.0"
     id("com.adarshr.test-logger") version "3.2.0"
     id("io.franzbecker.gradle-lombok") version "5.0.0"
     `java-library`
@@ -19,22 +19,22 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.jena:jena-core:4.7.0")
-    implementation("org.apache.jena:jena-arq:4.7.0")
-    implementation("org.slf4j:slf4j-api:2.0.7")
-    compileOnly("org.projectlombok:lombok:1.18.26")
+    implementation("org.apache.jena:jena-core:4.9.0")
+    implementation("org.apache.jena:jena-arq:4.9.0")
+    implementation("org.slf4j:slf4j-api:2.0.9")
+    compileOnly("org.projectlombok:lombok:1.18.30")
 
-    annotationProcessor("org.projectlombok:lombok:1.18.26")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testImplementation("org.assertj:assertj-core:3.24.2")
-    testImplementation("net.jqwik:jqwik:1.7.3")
-    testImplementation("org.apache.jena:apache-jena-libs:4.2.0")
-    testCompileOnly("org.projectlombok:lombok:1.18.26")
+    testImplementation("net.jqwik:jqwik:1.8.0")
+    testImplementation("org.apache.jena:apache-jena-libs:4.9.0")
+    testCompileOnly("org.projectlombok:lombok:1.18.30")
 
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.26")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }
 
 java {
