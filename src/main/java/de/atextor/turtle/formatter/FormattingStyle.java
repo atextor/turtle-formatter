@@ -51,6 +51,9 @@ public class FormattingStyle {
     );
 
     @Builder.Default
+    public String emptyRdfBase = TurtleFormatter.DEFAULT_EMPTY_BASE;
+
+    @Builder.Default
     public GapStyle afterClosingParenthesis = GapStyle.NOTHING;
 
     @Builder.Default

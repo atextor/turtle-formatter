@@ -431,7 +431,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         // Workaround to force writing out URIs without a base that is "automatically determined" by Jena:
         // when calling model.read(inputStream, base, language) and passing an empty String as base, Jena will
         // replace that with something "smart" such as the current directory.
-        final String uriWithoutEmptyBase = uri.startsWith( EMPTY_BASE ) ? uri.substring( EMPTY_BASE.length() ) : uri;
+        final String uriWithoutEmptyBase = uri.startsWith( style.emptyRdfBase ) ?
+            uri.substring( style.emptyRdfBase.length() ) : uri;
         final String shortForm = state.prefixMapping.shortForm( uriWithoutEmptyBase );
         if ( shortForm.equals( uriWithoutEmptyBase ) ) {
             return "<" + uriWithoutEmptyBase + ">";
