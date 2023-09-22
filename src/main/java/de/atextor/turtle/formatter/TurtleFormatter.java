@@ -46,7 +46,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     public static final String OUTPUT_ERROR_MESSAGE = "Could not write to stream";
 
-    public static final String EMPTY_BASE = "urn:turtle-formatter";
+    public static final String DEFAULT_EMPTY_BASE = "urn:turtleformatter:internal";
 
     private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
 
