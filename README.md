@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.8.
+current version is 1.2.9.
 
 **Current Status**: The library is feature-complete.
 
@@ -126,27 +126,32 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.8</version>
+  <version>1.2.9</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.8'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.9'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.8")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.9")`
 
 ### Calling the formatter
 
 ```java
+import java.io.FileInputStream;
 import de.atextor.turtle.formatter.FormattingStyle;
 import de.atextor.turtle.formatter.TurtleFormatter;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.rdf.model.ModelFactory;
 
 // ...
 
-TurtleFormatter formatter = new TurtleFormatter(FormattingStyle.DEFAULT);
-// Build or load a Jena Model
-Model model = RDFDataMgr.loadModel("data.ttl");
+// Determine formatting style
+FormattingStyle style = FormattingStyle.DEFAULT;
+TurtleFormatter formatter = new TurtleFormatter(style);
+// Build or load a Jena Model.
+// Use the style's base URI for loading the model.
+Model model = ModelFactory.createDefaultModel();
+model.read(new FileInputStream("data.ttl"), style.emptyRdfBase, "TURTLE");
 // Either create a string...
 String prettyPrintedModel = formatter.apply(model);
 // ...or write directly to an OutputStream
@@ -168,6 +173,21 @@ The following options can be set on the FormattingStyle builder:
 <td>Option</td>
 <td>Description</td>
 <td>Default</td>
+</tr>
+
+<tr>
+<td>
+
+`emptyRdfBase`
+
+</td>
+<td>Set the URI that should be left out in formatting. If you don't care about
+this, don't change it and use the FormattingStyle's emptyRdfBase field as the
+base URI when loading/creating the model that will be formatted, see [calling
+the formatter](#calling-the-formatter).
+
+</td>
+<td>urn:turtleformatter:internal</td>
 </tr>
 
 <tr>
@@ -672,6 +692,9 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.9:
+  * The dummy base URI is now configurable in the formatting style. Its default
+    value was changed (to `urn:turtleformatter:internal`) to make it a valid URI.
 * 1.2.8:
   * Bugfix: Quotes that are the last character in a triple-quoted string are
     escaped correctly
