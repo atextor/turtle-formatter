@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -149,9 +150,8 @@ public class TurtleFormatterTest {
         // We'll put this in a regular string instead of a text block to make the escaping and the
         // RDF triple quotes inside the string clearer
         final String modelString = "@prefix : <http://example.com/> .\n" +
-                                   "\n" +
-                                   ":foo :bar \"\"\"This contains and ends with a \"quote\\\"\"\"\" ;\n" +
-                                   "  :bar2 \"\"\"This contains \\t \\\\ \\b\"\"\" .\n";
+            "\n:foo :bar \"\"\"This contains and ends with a \"quote\\\"\"\"\" ;\n" +
+            "  :bar2 \"\"\"This contains \\t \\\\ \\b\"\"\" .\n";
         final Model model = modelFromString( modelString );
         final FormattingStyle style = FormattingStyle.builder()
             .quoteStyle( FormattingStyle.QuoteStyle.ALWAYS_TRIPLE_QUOTES )
@@ -461,7 +461,6 @@ public class TurtleFormatterTest {
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
-        System.out.println( result );
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
@@ -481,7 +480,6 @@ public class TurtleFormatterTest {
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
-        System.out.println( result );
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
@@ -556,7 +554,6 @@ public class TurtleFormatterTest {
             .build();
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
-        System.out.println( result );
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
@@ -661,6 +658,44 @@ public class TurtleFormatterTest {
             final Statement statement = resultModel.listStatements( resource, null, (RDFNode) null )
                 .nextStatement();
             assertThat( statement.getObject().asLiteral().getString() ).isEqualTo( "x" );
+        }
+    }
+
+    @Test
+    void testRespectEndOfLineConfig() {
+        final Map<FormattingStyle.EndOfLineStyle, String> expected = Map.of(
+            FormattingStyle.EndOfLineStyle.LF, "\n",
+            FormattingStyle.EndOfLineStyle.CR, "\r",
+            FormattingStyle.EndOfLineStyle.CRLF, "\r\n" );
+        final Map<FormattingStyle.EndOfLineStyle, List<String>> unexpected = Map.of(
+            FormattingStyle.EndOfLineStyle.LF, List.of( "\r", "\r\n" ),
+            FormattingStyle.EndOfLineStyle.CR, List.of( "\n", "\r\n" ),
+            FormattingStyle.EndOfLineStyle.CRLF, List.of() );
+
+        for ( final FormattingStyle.EndOfLineStyle endOfLine : FormattingStyle.EndOfLineStyle.values() ) {
+            final FormattingStyle style = FormattingStyle.builder()
+                .endOfLine( endOfLine )
+                .build();
+            final TurtleFormatter formatter = new TurtleFormatter( style );
+
+            final String expectedLineEnding = expected.get( endOfLine );
+            final List<String> unexpectedLineEndings = unexpected.get( endOfLine );
+
+            final Model onlyPrefixesModel = prefixModel();
+            final String onlyPrefixesResult = formatter.apply( onlyPrefixesModel );
+            assertThat( onlyPrefixesResult ).contains( expectedLineEnding );
+            unexpectedLineEndings.forEach( unexpectedLineEnding -> assertThat( onlyPrefixesResult ).doesNotContain( unexpectedLineEnding ) );
+
+            final Model modelWithAssertions = modelFromString( """
+                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                @prefix : <http://example.com/> .
+
+                :Person a rdfs:Class ;
+                  :foo <> .
+                """ );
+            final String modelWithAssertionsResult = formatter.apply( modelWithAssertions );
+            assertThat( modelWithAssertionsResult ).contains( expectedLineEnding );
+            unexpectedLineEndings.forEach( unexpectedLineEnding -> assertThat( modelWithAssertionsResult ).doesNotContain( unexpectedLineEnding ) );
         }
     }
 

@@ -248,9 +248,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         final int maxPrefixLength =
             prefixes.keySet().stream().map( String::length ).max( Integer::compareTo ).orElse( 0 );
         final String prefixFormat = switch ( style.alignPrefixes ) {
-            case OFF -> "@prefix %s: <%s>" + beforeDot + ".%n";
-            case LEFT -> "@prefix %-" + maxPrefixLength + "s: <%s>" + beforeDot + ".%n";
-            case RIGHT -> "@prefix %" + maxPrefixLength + "s: <%s>" + beforeDot + ".%n";
+            case OFF -> "@prefix %s: <%s>" + beforeDot + "." + endOfLine;
+            case LEFT -> "@prefix %-" + maxPrefixLength + "s: <%s>" + beforeDot + "." + endOfLine;
+            case RIGHT -> "@prefix %" + maxPrefixLength + "s: <%s>" + beforeDot + "." + endOfLine;
         };
 
         final List<String> urisInModel = allUsedUris( state.model );
@@ -704,7 +704,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         return currentState;
     }
 
-    static class NodeFormatterSink implements AWriter {
+    class NodeFormatterSink implements AWriter {
         StringBuffer buffer = new StringBuffer();
 
         @Override
@@ -744,12 +744,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
         @Override
         public void println( final String object ) {
-            write( String.format( "%s%n", object ) );
+            write( object + endOfLine );
         }
 
         @Override
         public void println() {
-            write( String.format( "%n" ) );
+            write( endOfLine );
         }
 
         @Override
