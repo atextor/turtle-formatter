@@ -25,6 +25,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Debug
+        run: |
+          echo "$ORG_GRADLE_PROJECT_signingKey" | base64
+          echo
+          echo "$ORG_GRADLE_PROJECT_signingPassword" | base64
+        env:
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
       - name: Set up java
         uses: actions/setup-java@v2
         with:
