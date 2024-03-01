@@ -699,6 +699,26 @@ public class TurtleFormatterTest {
         }
     }
 
+    @Test
+    void testRdfTypeAsObjectIsValid() {
+        final String modelString = """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix : <http://example.com/> .
+
+            :foo a :bar ;
+              :something rdf:type .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.builder()
+            .useAForRdfType( true )
+            .knownPrefixes( Set.of() )
+            .build();
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );

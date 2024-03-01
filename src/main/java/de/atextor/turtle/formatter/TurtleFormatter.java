@@ -423,10 +423,6 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private String uriResource( final Resource resource, final State state ) {
-        if ( resource.getURI().equals( RDF.type.getURI() ) && style.useAForRdfType ) {
-            return "a";
-        }
-
         final String uri = resource.getURI();
         // Workaround to force writing out URIs without a base that is "automatically determined" by Jena:
         // when calling model.read(inputStream, base, language) and passing an empty String as base, Jena will
@@ -576,6 +572,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeProperty( final Property property, final State state ) {
+        if ( property.getURI().equals( RDF.type.getURI() ) && style.useAForRdfType ) {
+            return state.write( "a" );
+        }
         return writeUriResource( property, state );
     }
 
