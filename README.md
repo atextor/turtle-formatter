@@ -126,7 +126,7 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.10</version>
+  <version>1.2.11</version>
 </dependency>
 ```
 
