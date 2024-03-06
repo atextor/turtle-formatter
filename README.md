@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.10.
+current version is 1.2.11.
 
 **Current Status**: The library is feature-complete.
 
@@ -130,9 +130,9 @@ Add the following dependency to your Maven `pom.xml`:
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.10'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.11'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.10")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.11")`
 
 ### Calling the formatter
 
@@ -692,6 +692,9 @@ elements in RDF lists.
 
 ## Release Notes
 
+* 1.2.11:
+  * Bugfix: `rdf:type` is not printed as `a` when used as an object
+  * Update all dependencies, including Apache Jena to 4.10.0
 * 1.2.10:
   * Configured endOfLine style is honored in prefix formatting
 * 1.2.9:
