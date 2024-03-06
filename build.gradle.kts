@@ -26,7 +26,7 @@ dependencies {
 
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.assertj:assertj-core:3.25.3")
     testImplementation("net.jqwik:jqwik:1.8.3")
     testImplementation("org.apache.jena:apache-jena-libs:4.10.0")
@@ -34,7 +34,7 @@ dependencies {
 
     testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+    testRuntimeOnly ("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -43,7 +43,7 @@ java {
 }
 
 fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
     val isStable = stableKeyword || regex.matches(version)
     return isStable.not()
