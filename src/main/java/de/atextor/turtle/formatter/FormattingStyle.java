@@ -13,8 +13,10 @@ import org.apache.jena.vocabulary.XSD;
 
 import java.net.URI;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -102,7 +104,7 @@ public class FormattingStyle {
     public Charset charset = Charset.UTF_8;
 
     @Builder.Default
-    public NumberFormat doubleFormat = new DecimalFormat( "0.####E0" );
+    public NumberFormat doubleFormat = new DecimalFormat("0.####E0" , DecimalFormatSymbols.getInstance(Locale.US));
 
     @Builder.Default
     public EndOfLineStyle endOfLine = EndOfLineStyle.LF;
