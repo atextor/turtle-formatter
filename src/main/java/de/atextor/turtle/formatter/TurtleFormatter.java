@@ -351,7 +351,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private boolean isList( final RDFNode node, final State state ) {
         return node.equals( RDF.nil ) ||
-            ( node.isResource() && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
+            ( node.isAnon() && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
     }
 
     private State writeResource( final Resource resource, final State state ) {

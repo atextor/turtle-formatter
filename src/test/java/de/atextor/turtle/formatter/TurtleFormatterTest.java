@@ -720,31 +720,42 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    void testRdfListBug(){
-        // TODO: when the bug is fixed, replace the input with the expected output (not sure what it would be).
+    void testRdfListNonAnonymous(){
         final String modelString = """
-                           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-                           @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-                           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-                           @prefix qudt: <http://qudt.org/schema/qudt/> .
-                           @prefix sh: <http://www.w3.org/ns/shacl#> .
-                        
-                           qudt:IntegerUnionList
-                             a rdf:List ;
-                             rdf:first [
-                                 sh:datatype xsd:nonNegativeInteger ;
-                               ] ;
-                             rdf:rest (
-                                 [
-                                   sh:datatype xsd:positiveInteger ;
-                                 ]
-                                 [
-                                   sh:datatype xsd:integer ;
-                                 ]
-                               ) ;
-                             rdfs:label "Integer union list" ;
-                           .             
-        """;
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix qudt: <http://qudt.org/schema/qudt/> .
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+
+            qudt:IntegerUnionList a rdf:List ;
+              rdfs:label "Integer union list" ;
+              rdf:first [
+                sh:datatype xsd:nonNegativeInteger ;
+              ] ;
+              rdf:rest ( [
+                sh:datatype xsd:positiveInteger ;
+              ] [
+                sh:datatype xsd:integer ;
+              ] ) .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    void testRdfListAnonymous(){
+        final String modelString = """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <http://example.com/ns#> .
+            
+            ex:something a ex:Thing ;
+              ex:hasList ( ex:one ex:two ) .
+            """;
         final Model model = modelFromString( modelString );
 
         final FormattingStyle style = FormattingStyle.DEFAULT;
