@@ -719,6 +719,40 @@ public class TurtleFormatterTest {
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
     }
 
+    @Test
+    void testRdfListBug(){
+        // TODO: when the bug is fixed, replace the input with the expected output (not sure what it would be).
+        final String modelString = """
+                           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+                           @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                           @prefix qudt: <http://qudt.org/schema/qudt/> .
+                           @prefix sh: <http://www.w3.org/ns/shacl#> .
+                        
+                           qudt:IntegerUnionList
+                             a rdf:List ;
+                             rdf:first [
+                                 sh:datatype xsd:nonNegativeInteger ;
+                               ] ;
+                             rdf:rest (
+                                 [
+                                   sh:datatype xsd:positiveInteger ;
+                                 ]
+                                 [
+                                   sh:datatype xsd:integer ;
+                                 ]
+                               ) ;
+                             rdfs:label "Integer union list" ;
+                           .             
+        """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
