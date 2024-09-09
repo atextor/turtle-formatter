@@ -212,7 +212,7 @@ public class FormattingStyle {
     );
 
     @Builder.Default
-    public BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "_:gen" + integer;
+    public BiFunction<Resource, Integer, String> anonymousNodeIdGenerator = ( resource, integer ) -> "gen" + integer;
 
     public enum Alignment {
         LEFT,
