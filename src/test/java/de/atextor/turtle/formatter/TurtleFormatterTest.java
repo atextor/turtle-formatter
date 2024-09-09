@@ -956,6 +956,61 @@ public class TurtleFormatterTest {
         assertThat(result.trim()).isEqualTo(expected);
     }
 
+    @Test
+    void testBlankNodeTriangle1(){
+        String content =   """
+           @prefix : <http://example.com/ns#> .
+           _:b1 :foo _:b2, _:b3.
+           _:b2 :foo _:b3.
+           
+           """;
+        String expected = """
+           @prefix : <http://example.com/ns#> .
+        
+           [
+             :foo [
+               :foo _:b3 ;
+             ] ;
+             :foo _:b3 ;
+           ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testBlankNodeTriangleWithBlankNodeTriple(){
+        String content =   """
+           @prefix : <http://example.com/ns#> .
+           [] :foo [] .
+           _:b1 :foo _:b2, _:b3.
+           _:b2 :foo _:b3.
+           
+           """;
+        String expected = """
+           @prefix : <http://example.com/ns#> .
+           
+           [
+             :foo [];
+           ] .
+           
+           [
+             :foo [
+               :foo _:b3 ;
+             ] ;
+             :foo _:b3 ;
+           ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
