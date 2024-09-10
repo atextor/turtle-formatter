@@ -829,6 +829,27 @@ public class TurtleFormatterTest {
         ).map(s -> Arguments.of(s));
     }
 
+    @Test
+    void testPreviouslyIdentifiedBlankNode(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:gen0 ex:has [
+               ex:has _:gen0 ;
+             ].""";
+        String expected = """
+          @prefix ex: <http://example.com/ns#> .
+           
+          _:gen0 ex:has [ 
+              ex:has _:gen0 ;
+            ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
 
     @Test
     void testBlankNodeCycle(){

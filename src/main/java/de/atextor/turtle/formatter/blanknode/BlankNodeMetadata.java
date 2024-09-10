@@ -72,4 +72,8 @@ public class BlankNodeMetadata {
     public Set<Resource> getLabeledBlankNodes() {
         return Collections.unmodifiableSet(this.labeledBlankNodes);
     }
+
+    public Set<String> getAllBlankNodeLabels() {
+        return Collections.unmodifiableSet(new HashSet<>(this.blankNodeLabels.values()));
+    }
 }

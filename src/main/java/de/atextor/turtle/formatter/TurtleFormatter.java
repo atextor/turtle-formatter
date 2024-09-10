@@ -224,13 +224,17 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                     ComparableRDFNodeFactory comparableRDFNodeFactory, BlankNodeMetadata blankNodeMetadata) {
         State currentState = new State( outputStream, model, predicateOrder, prefixMapping, comparableRDFNodeFactory);
         int i = 0;
+        Set<String> blankNodeLabelsInInput = blankNodeMetadata.getAllBlankNodeLabels();
         for ( final Resource r : anonymousResourcesThatNeedAnId( model, currentState, comparableRDFNodeFactory, blankNodeMetadata ) ) {
+            // use original label if present
             String s = blankNodeMetadata.getLabel(r.asNode());
             if (s == null) {
-                s = style.anonymousNodeIdGenerator.apply( r, i );
+                // not a labeled blank node in the input: generate (and avoid collisions)
+                do {
+                    s = style.anonymousNodeIdGenerator.apply(r, i++);
+                } while (currentState.identifiedAnonymousResources.values().contains(s) && blankNodeLabelsInInput.contains(s));
             }
             currentState = currentState.withIdentifiedAnonymousResource( r, s );
-            i++;
         }
         return currentState;
     }
