@@ -8,7 +8,14 @@ import lombok.With;
 import org.apache.jena.atlas.io.AWriter;
 import org.apache.jena.atlas.lib.Pair;
 import org.apache.jena.irix.IRIException;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFList;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.out.NodeFormatterTTL;
 import org.apache.jena.riot.system.PrefixLib;
 import org.apache.jena.riot.system.PrefixMap;
@@ -24,7 +31,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -105,6 +118,15 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         return model.listStatements( null, predicate, object ).toList();
     }
 
+    /**
+     * Serializes the specified model as TTL according to the {@link TurtleFormatter}'s {@link FormattingStyle}.
+     *
+     * <br>
+     * Note: Using this method, ordering of blank nodes may differ between multiple runs using identical data.
+     *
+     * @param model the model to serialize.
+     * @return the formatted TTL serialization of the model
+     */
     @Override
     public String apply( final Model model ) {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -112,6 +134,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         return outputStream.toString();
     }
 
+    /**
+     * Format the specified TTL content according to the {@link TurtleFormatter}'s {@link FormattingStyle}.
+     *
+     * @param content RDF content in TTL format.
+     * @return the formatted content
+     */
     public String applyToContent( final String content ) {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         process( content, outputStream );
@@ -138,6 +166,17 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
     }
 
+    /**
+     * Serializes the specified model as TTL according to the {@link TurtleFormatter}'s {@link FormattingStyle}
+     * and writes it to the specified outputStream.
+     *
+     * <br>
+     * Note: Using this method, ordering of blank nodes may differ between multiple runs using identical data.
+     *
+     * @param model the model to serialize.
+     * @param outputStream the stream to write to
+     * @return the formatted TTL serialization of the model
+     */
     @Override
     public void accept( final Model model, final OutputStream outputStream ) {
         if ( style.charset == FormattingStyle.Charset.UTF_8_BOM ) {
@@ -256,17 +295,15 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             .map( RDFNode::asResource )
             .filter( RDFNode::isAnon ).collect(Collectors.toSet());
         candidates.removeAll(currentState.getBlankNodeMetadata().getLabeledBlankNodes());
-        List<Resource> candidatesInOrder = new ArrayList<>();
-        candidatesInOrder.addAll(
-                        new ArrayList<>(currentState.getBlankNodeMetadata().getLabeledBlankNodes())
-                        .stream()
-                        .sorted( currentState.getRDFNodeComparatorFactory().comparator())
-                        .toList());
-        candidatesInOrder.addAll(
-                        candidates
-                        .stream()
-                        .sorted( currentState.getRDFNodeComparatorFactory().comparator())
-                        .toList());
+        List<Resource> candidatesInOrder =
+                        Stream.concat(
+                            currentState.getBlankNodeMetadata().getLabeledBlankNodes()
+                                            .stream()
+                                            .sorted( currentState.getRDFNodeComparatorFactory().comparator()),
+                            candidates
+                            .stream()
+                            .sorted( currentState.getRDFNodeComparatorFactory().comparator()))
+                        .toList();
         for (Resource candidate: candidatesInOrder) {
             if (identifiedResources.contains (candidate)){
                 continue;
