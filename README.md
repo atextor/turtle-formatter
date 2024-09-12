@@ -637,7 +637,7 @@ the name of the blank node in the output.
 </td>
 <td>
 
-`(r, i) -> "_:gen" + i`
+`(r, i) -> "gen" + i`
 
 </td>
 </tr>
@@ -691,7 +691,11 @@ elements in RDF lists.
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
 ## Release Notes
-
+* 1.2.12:
+  * Bugfix: Handle RDF lists that start with a non-anonymous node   
+  * Bugfix: Handle blank node cycles 
+  * Bugfix: Ensure constant blank node ordering
+  * Bugfix: Set Locale for NumberFormat to US
 * 1.2.11:
   * Bugfix: `rdf:type` is not printed as `a` when used as an object
   * Update all dependencies, including Apache Jena to 4.10.0
