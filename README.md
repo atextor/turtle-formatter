@@ -631,8 +631,8 @@ model:
 ```
 
 There is no way to serialize this model in RDF/Turtle while using the inline blank node syntax `[ ]`
-for the anonymous node `_:b0`. In this case, the anonymousNodeIdGenerator is called to determine
-the name of the blank node in the output.
+for the anonymous node `_:b0`. If, as in this example, the node in question already has a label, the label is re-used.
+Otherwise, the anonymousNodeIdGenerator is used to generate it.
 
 </td>
 <td>
