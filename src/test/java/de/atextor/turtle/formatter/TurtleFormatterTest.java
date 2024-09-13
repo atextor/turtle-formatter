@@ -1,21 +1,39 @@
 package de.atextor.turtle.formatter;
 
+import org.apache.jena.atlas.io.AWriter;
+import org.apache.jena.atlas.io.IO;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.lang.LabelToNode;
+import org.apache.jena.riot.out.NodeFormatter;
+import org.apache.jena.riot.out.NodeFormatterNT;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFOps;
+import org.apache.jena.riot.writer.StreamWriterTriX;
+import org.apache.jena.riot.writer.WriterStreamRDFPlain;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -717,6 +735,301 @@ public class TurtleFormatterTest {
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.apply( model );
         assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    void testRdfListNonAnonymous(){
+        final String modelString = """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix qudt: <http://qudt.org/schema/qudt/> .
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+
+            qudt:IntegerUnionList a rdf:List ;
+              rdfs:label "Integer union list" ;
+              rdf:first [
+                sh:datatype xsd:nonNegativeInteger ;
+              ] ;
+              rdf:rest ( [
+                sh:datatype xsd:positiveInteger ;
+              ] [
+                sh:datatype xsd:integer ;
+              ] ) .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @Test
+    void testRdfListAnonymous(){
+        final String modelString = """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <http://example.com/ns#> .
+            
+            ex:something a ex:Thing ;
+              ex:hasList ( ex:one ex:two ) .
+            """;
+        final Model model = modelFromString( modelString );
+
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.apply( model );
+        assertThat( result.trim() ).isEqualTo( modelString.trim() );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testConsistentBlankNodeOrdering(String content){
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 1; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(content.trim());
+        }
+    }
+
+    static Stream<Arguments> testConsistentBlankNodeOrdering(){
+        return Stream.of(
+    """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <http://example.com/ns#> .
+            
+            [ 
+              a ex:Something ;
+            ] .
+            
+            [
+              a ex:SomethingElse ;
+            ] .
+            """,
+
+            """
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <http://example.com/ns#> .
+            
+            ex:aThing ex:has [
+                a ex:Something ;
+              ] ;
+              ex:has [
+                a ex:SomethingElse ;
+              ] .
+            """
+            ,
+           """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:blank1 ex:has [
+               ex:has _:blank1 ;
+             ] ."""
+        ).map(s -> Arguments.of(s));
+    }
+
+    @Test
+    void testPreviouslyIdentifiedBlankNode(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:gen0 ex:has [
+               ex:has _:gen0 ;
+             ].""";
+        String expected = """
+          @prefix ex: <http://example.com/ns#> .
+           
+          _:gen0 ex:has [ 
+              ex:has _:gen0 ;
+            ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testBlankNodeCycle(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:blank1 ex:has _:blank2 .
+           
+           _:blank2 ex:has _:blank1 .
+           """;
+        String expected = """
+          @prefix ex: <http://example.com/ns#> .
+           
+          _:blank1 ex:has [ 
+              ex:has _:blank1 ;
+            ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testNoBlankNodeCycle(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:one ex:has ex:A .
+           ex:A ex:has _:one .
+           
+           """;
+        String expected = """
+          @prefix ex: <http://example.com/ns#> .
+           
+          ex:A ex:has [ 
+              ex:has ex:A ;
+            ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testNoBlankNodeCycle2Blanks(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:one ex:has ex:A .
+           ex:A ex:has _:two .
+           _:two ex:has _:three .
+           _:three ex:has _:one .
+           
+           """;
+        String expected = """
+          @prefix ex: <http://example.com/ns#> .
+           
+          ex:A ex:has [ 
+              ex:has [ 
+                ex:has [ 
+                  ex:has ex:A ; 
+                ] ;
+              ] ;
+            ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testBlankNodeCycle1ResBetween(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:one ex:has ex:A .
+           ex:A ex:has _:two .
+           _:two ex:has _:one .
+           
+           """;
+        String expected = """
+        @prefix ex: <http://example.com/ns#> .
+         
+        ex:A ex:has [
+            ex:has [
+              ex:has ex:A ;
+            ] ;
+          ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+    @Test
+    void testBlankNodeCycle2ResBetween(){
+        String content =   """
+           @prefix ex: <http://example.com/ns#> .
+           
+           _:one ex:has ex:A .
+           ex:A ex:has _:two .
+           _:two ex:has ex:B .
+           ex:B ex:has _:one .
+           
+           """;
+        String expected = """
+        @prefix ex: <http://example.com/ns#> .
+         
+        ex:A ex:has [
+            ex:has ex:B ;
+          ] .
+        
+        ex:B ex:has [
+            ex:has ex:A ;
+          ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+    @Test
+    void testBlankNodeTriangle1(){
+        String content =   """
+           @prefix : <http://example.com/ns#> .
+           _:b1 :foo _:b2, _:b3.
+           _:b2 :foo _:b3.
+           
+           """;
+        String expected = """
+           @prefix : <http://example.com/ns#> .
+        
+           [
+             :foo [
+               :foo _:b3 ;
+             ] ;
+             :foo _:b3 ;
+           ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testBlankNodeTriangleWithBlankNodeTriple(){
+        String content =   """
+           @prefix : <http://example.com/ns#> .
+           [] :foo [] .
+           _:b1 :foo _:b2, _:b3.
+           _:b2 :foo _:b3.
+           
+           """;
+        String expected = """
+           @prefix : <http://example.com/ns#> .
+           
+           [
+             :foo [];
+           ] .
+           
+           [
+             :foo [
+               :foo _:b3 ;
+             ] ;
+             :foo _:b3 ;
+           ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        for (int i = 0; i < 20; i++) {
+            final String result = formatter.applyToContent(content);
+            assertThat(result.trim()).isEqualTo(expected);
+        }
     }
 
     private Model modelFromString( final String content ) {

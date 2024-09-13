@@ -1,5 +1,7 @@
 package de.atextor.turtle.formatter;
 
+import de.atextor.turtle.formatter.blanknode.BlankNodeMetadata;
+import de.atextor.turtle.formatter.blanknode.BlankNodeOrderAwareTurtleParser;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.With;
@@ -41,6 +43,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.function.Predicate.not;
 
 public class TurtleFormatter implements Function<Model, String>, BiConsumer<Model, OutputStream> {
 
@@ -99,11 +103,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 Integer.MAX_VALUE
         ).thenComparing( Map.Entry::getKey );
 
-        objectOrder = Comparator.<RDFNode>comparingInt( object ->
+        objectOrder = Comparator.comparingInt( object ->
             style.objectOrder.contains( object ) ?
                 style.objectOrder.indexOf( object ) :
                 Integer.MAX_VALUE
-        ).thenComparing( RDFNode::toString );
+        );
     }
 
     private static List<Statement> statements( final Model model ) {
@@ -114,11 +118,44 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         return model.listStatements( null, predicate, object ).toList();
     }
 
+    /**
+     * Serializes the specified model as TTL according to the {@link TurtleFormatter}'s {@link FormattingStyle}.
+     *
+     * <br>
+     * Note: Using this method, ordering of blank nodes may differ between multiple runs using identical data.
+     *
+     * @param model the model to serialize.
+     * @return the formatted TTL serialization of the model
+     */
     @Override
     public String apply( final Model model ) {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         accept( model, outputStream );
         return outputStream.toString();
+    }
+
+    /**
+     * Format the specified TTL content according to the {@link TurtleFormatter}'s {@link FormattingStyle}.
+     *
+     * @param content RDF content in TTL format.
+     * @return the formatted content
+     */
+    public String applyToContent( final String content ) {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        process( content, outputStream );
+        return outputStream.toString();
+    }
+
+    private void process(String content, ByteArrayOutputStream outputStream) {
+        if ( style.charset == FormattingStyle.Charset.UTF_8_BOM ) {
+            writeByteOrderMark( outputStream );
+        }
+        BlankNodeOrderAwareTurtleParser.ParseResult result = BlankNodeOrderAwareTurtleParser.parseModel(content);
+        Model model = result.getModel();
+        BlankNodeMetadata blankNodeMetadata = result.getBlankNodeMetadata();
+        final PrefixMapping prefixMapping = buildPrefixMapping( model );
+        RDFNodeComparatorFactory RDFNodeComparatorFactory = new RDFNodeComparatorFactory(prefixMapping, blankNodeMetadata);
+        doFormat(model, outputStream, prefixMapping, RDFNodeComparatorFactory, blankNodeMetadata);
     }
 
     private void writeByteOrderMark( final OutputStream outputStream ) {
@@ -129,6 +166,16 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
     }
 
+    /**
+     * Serializes the specified model as TTL according to the {@link TurtleFormatter}'s {@link FormattingStyle}
+     * and writes it to the specified outputStream.
+     *
+     * <br>
+     * Note: Using this method, ordering of blank nodes may differ between multiple runs using identical data.
+     *
+     * @param model the model to serialize.
+     * @param outputStream the stream to write to
+     */
     @Override
     public void accept( final Model model, final OutputStream outputStream ) {
         if ( style.charset == FormattingStyle.Charset.UTF_8_BOM ) {
@@ -136,33 +183,37 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         }
 
         final PrefixMapping prefixMapping = buildPrefixMapping( model );
+        RDFNodeComparatorFactory RDFNodeComparatorFactory = new RDFNodeComparatorFactory(prefixMapping);
+        doFormat(model, outputStream, prefixMapping, RDFNodeComparatorFactory, BlankNodeMetadata.gotNothing());
+    }
 
+    private void doFormat(Model model, OutputStream outputStream, PrefixMapping prefixMapping,
+                    RDFNodeComparatorFactory RDFNodeComparatorFactory, BlankNodeMetadata blankNodeMetadata) {
         final Comparator<Property> predicateOrder = Comparator.<Property>comparingInt( property ->
             style.predicateOrder.contains( property ) ?
                 style.predicateOrder.indexOf( property ) :
                 Integer.MAX_VALUE
         ).thenComparing( property -> prefixMapping.shortForm( property.getURI() ) );
-
-        final State initialState = buildInitialState( model, outputStream, prefixMapping, predicateOrder );
-
+        final State initialState = buildInitialState(model, outputStream, prefixMapping, predicateOrder,
+                        RDFNodeComparatorFactory, blankNodeMetadata);
         final State prefixesWritten = writePrefixes( initialState );
-
-        final Comparator<Statement> subjectComparator =
-            Comparator.comparing( statement -> statement.getSubject().isURIResource() ?
-                prefixMapping.shortForm( statement.getSubject().getURI() ) : statement.getSubject().toString() );
-
-        final List<Statement> statements = determineStatements( model, subjectComparator );
+        final List<Statement> statements = determineStatements(model, RDFNodeComparatorFactory);
         final State namedResourcesWritten = writeNamedResources( prefixesWritten, statements );
         final State allResourcesWritten = writeAnonymousResources( namedResourcesWritten );
         final State finalState = style.insertFinalNewline ? allResourcesWritten.newLine() : allResourcesWritten;
-
         LOG.debug( "Written {} resources, with {} named anonymous resources", finalState.visitedResources.size(),
             finalState.identifiedAnonymousResources.size() );
     }
 
-    private State writeAnonymousResources( final State state ) {
+    private State writeAnonymousResources( final State state) {
         State currentState = state;
-        for ( final Resource resource : state.identifiedAnonymousResources.keySet() ) {
+        List<Resource> sortedAnonymousIdentifiedResources = state
+                        .identifiedAnonymousResources
+                        .keySet()
+                        .stream()
+                        .sorted( state.getRDFNodeComparatorFactory().comparator())
+                        .toList();
+        for ( final Resource resource :  sortedAnonymousIdentifiedResources) {
             if ( !resource.listProperties().hasNext() ) {
                 continue;
             }
@@ -189,15 +240,17 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         return currentState;
     }
 
-    private List<Statement> determineStatements( final Model model, final Comparator<Statement> subjectComparator ) {
+    private List<Statement> determineStatements( final Model model, final RDFNodeComparatorFactory rdfNodeComparatorFactory) {
         final Stream<Statement> wellKnownSubjects = style.subjectOrder.stream().flatMap( subjectType ->
-            statements( model, RDF.type, subjectType ).stream().sorted( subjectComparator ) );
+            statements( model, RDF.type, subjectType )
+                            .stream()
+                            .sorted( Comparator.comparing( Statement::getSubject, rdfNodeComparatorFactory.comparator())));
 
         final Stream<Statement> otherSubjects = statements( model ).stream()
             .filter( statement -> !( statement.getPredicate().equals( RDF.type )
                 && statement.getObject().isResource()
                 && style.subjectOrder.contains( statement.getObject().asResource() ) ) )
-            .sorted( subjectComparator );
+            .sorted( Comparator.comparing(Statement::getSubject, rdfNodeComparatorFactory.comparator()));
 
         return Stream.concat( wellKnownSubjects, otherSubjects )
             .filter( statement -> !( statement.getSubject().isAnon()
@@ -206,14 +259,21 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State buildInitialState( final Model model, final OutputStream outputStream,
-        final PrefixMapping prefixMapping, final Comparator<Property> predicateOrder ) {
-
-        State currentState = new State( outputStream, model, predicateOrder, prefixMapping );
+        final PrefixMapping prefixMapping, final Comparator<Property> predicateOrder,
+                    RDFNodeComparatorFactory RDFNodeComparatorFactory, BlankNodeMetadata blankNodeMetadata) {
+        State currentState = new State( outputStream, model, predicateOrder, prefixMapping, RDFNodeComparatorFactory, blankNodeMetadata);
         int i = 0;
-        for ( final Resource r : anonymousResourcesThatNeedAnId( model ) ) {
-            final String s = style.anonymousNodeIdGenerator.apply( r, i );
+        Set<String> blankNodeLabelsInInput = blankNodeMetadata.getAllBlankNodeLabels();
+        for ( final Resource r : anonymousResourcesThatNeedAnId( model, currentState) ) {
+            // use original label if present
+            String s = blankNodeMetadata.getLabel(r.asNode());
+            if (s == null) {
+                // not a labeled blank node in the input: generate (and avoid collisions)
+                do {
+                    s = style.anonymousNodeIdGenerator.apply(r, i++);
+                } while (currentState.identifiedAnonymousResources.containsValue(s) && blankNodeLabelsInInput.contains(s));
+            }
             currentState = currentState.withIdentifiedAnonymousResource( r, s );
-            i++;
         }
         return currentState;
     }
@@ -222,17 +282,59 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
      * Anonymous resources that are referred to more than once need to be given an internal id and
      * can not be serialized using [ ] notation.
      *
-     * @param model the input model
+     * @param model                    the input model
+     * @param currentState the state
      * @return the set of anonymous resources that are referred to more than once
      */
-    private Set<Resource> anonymousResourcesThatNeedAnId( final Model model ) {
-        return model.listObjects().toList().stream()
+    private Set<Resource> anonymousResourcesThatNeedAnId( final Model model, State currentState) {
+        Set<Resource> identifiedResources = new HashSet<>(currentState.identifiedAnonymousResources.keySet()); //needed for cycle detection
+        Set<Resource> candidates = model.listObjects().toList().stream()
             .filter( RDFNode::isResource )
             .map( RDFNode::asResource )
-            .filter( RDFNode::isAnon )
-            .filter( object -> statements( model, null, object ).size() > 1 )
-            .collect( Collectors.toSet() );
+            .filter( RDFNode::isAnon ).collect(Collectors.toSet());
+        candidates.removeAll(currentState.getBlankNodeMetadata().getLabeledBlankNodes());
+        List<Resource> candidatesInOrder =
+                        Stream.concat(
+                            currentState.getBlankNodeMetadata().getLabeledBlankNodes()
+                                            .stream()
+                                            .sorted( currentState.getRDFNodeComparatorFactory().comparator()),
+                            candidates
+                            .stream()
+                            .sorted( currentState.getRDFNodeComparatorFactory().comparator()))
+                        .toList();
+        for (Resource candidate: candidatesInOrder) {
+            if (identifiedResources.contains (candidate)){
+                continue;
+            }
+            if (statements(model, null, candidate).size() > 1 || hasBlankNodeCycle( model, candidate, identifiedResources ) ) {
+                identifiedResources.add(candidate);
+            }
+        }
+        identifiedResources.removeAll(currentState.identifiedAnonymousResources.keySet());
+        return identifiedResources;
     }
+
+    private boolean hasBlankNodeCycle(Model model, Resource start, Set<Resource> identifiedResources) {
+        if (!start.isAnon()){
+            return false;
+        }
+        return hasBlankNodeCycle(model, start, start, identifiedResources, new HashSet<>());
+    }
+
+    private boolean hasBlankNodeCycle(Model model, Resource resource, Resource target, Set<Resource> identifiedResources, Set<Resource> visited) {
+        if (visited.contains(resource)){
+            return false;
+        }
+        visited.add(resource);
+        return model.listStatements(resource, null, (RDFNode) null)
+                        .toList().stream()
+                        .map(Statement::getObject)
+                        .filter(RDFNode::isAnon)
+                        .map(RDFNode::asResource)
+                        .filter(not (identifiedResources::contains))
+                        .anyMatch(o -> target.equals(o) || hasBlankNodeCycle(model, o, target, identifiedResources, visited));
+    }
+
 
     private PrefixMapping buildPrefixMapping( final Model model ) {
         final Map<String, String> prefixMap = style.knownPrefixes.stream()
@@ -351,7 +453,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private boolean isList( final RDFNode node, final State state ) {
         return node.equals( RDF.nil ) ||
-            ( node.isResource() && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
+            ( node.isAnon() && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
     }
 
     private State writeResource( final Resource resource, final State state ) {
@@ -407,7 +509,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private State writeAnonymousResource( final Resource resource, final State state ) {
         if ( state.identifiedAnonymousResources.containsKey( resource ) ) {
-            return state.write( state.identifiedAnonymousResources.getOrDefault( resource, "" ) );
+            return state.write( "_:" + state.identifiedAnonymousResources.getOrDefault( resource, "" ) );
         }
 
         if ( !state.model.contains( resource, null, (RDFNode) null ) ) {
@@ -656,7 +758,8 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
         int index = 0;
         State currentState = predicateWrittenOnce;
-        for ( final RDFNode object : objects.stream().sorted( objectOrder ).toList() ) {
+        for ( final RDFNode object : objects.stream().sorted( objectOrder.thenComparing(
+                        state.getRDFNodeComparatorFactory().comparator())).toList() ) {
             final boolean lastObject = index == objects.size() - 1;
             final State predicateWritten = useComma ? currentState :
                 writeProperty( predicate, currentState );
@@ -776,6 +879,10 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
         PrefixMapping prefixMapping;
 
+        RDFNodeComparatorFactory RDFNodeComparatorFactory;
+
+        BlankNodeMetadata blankNodeMetadata;
+
         int indentationLevel;
 
         int alignment;
@@ -784,11 +891,11 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
 
         public State( final OutputStream outputStream, final Model model, final Comparator<Property> predicateOrder,
-            final PrefixMapping prefixMapping ) {
-            this( outputStream, model, Set.of(), Map.of(), predicateOrder, prefixMapping, 0, 0, "" );
+            final PrefixMapping prefixMapping, final RDFNodeComparatorFactory RDFNodeComparatorFactory, BlankNodeMetadata blankNodeMetadata) {
+            this( outputStream, model, Set.of(), Map.of(), predicateOrder, prefixMapping, RDFNodeComparatorFactory, blankNodeMetadata, 0, 0, "" );
         }
 
-        public State withIdentifiedAnonymousResource( final Resource anonymousResource, final String id ) {
+        public State withIdentifiedAnonymousResource( final Resource anonymousResource, final String id) {
             final Map<Resource, String> newMap = new HashMap<>( identifiedAnonymousResources );
             newMap.put( anonymousResource, id );
             return withIdentifiedAnonymousResources( newMap );
