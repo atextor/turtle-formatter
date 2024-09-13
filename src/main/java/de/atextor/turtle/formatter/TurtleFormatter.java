@@ -103,7 +103,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 Integer.MAX_VALUE
         ).thenComparing( Map.Entry::getKey );
 
-        objectOrder = Comparator.<RDFNode>comparingInt( object ->
+        objectOrder = Comparator.comparingInt( object ->
             style.objectOrder.contains( object ) ?
                 style.objectOrder.indexOf( object ) :
                 Integer.MAX_VALUE
@@ -175,7 +175,6 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
      *
      * @param model the model to serialize.
      * @param outputStream the stream to write to
-     * @return the formatted TTL serialization of the model
      */
     @Override
     public void accept( final Model model, final OutputStream outputStream ) {
@@ -272,7 +271,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
                 // not a labeled blank node in the input: generate (and avoid collisions)
                 do {
                     s = style.anonymousNodeIdGenerator.apply(r, i++);
-                } while (currentState.identifiedAnonymousResources.values().contains(s) && blankNodeLabelsInInput.contains(s));
+                } while (currentState.identifiedAnonymousResources.containsValue(s) && blankNodeLabelsInInput.contains(s));
             }
             currentState = currentState.withIdentifiedAnonymousResource( r, s );
         }
@@ -288,8 +287,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
      * @return the set of anonymous resources that are referred to more than once
      */
     private Set<Resource> anonymousResourcesThatNeedAnId( final Model model, State currentState) {
-        Set<Resource> identifiedResources = new HashSet<>();
-        identifiedResources.addAll(currentState.identifiedAnonymousResources.keySet()); //needed for cycle detection
+        Set<Resource> identifiedResources = new HashSet<>(currentState.identifiedAnonymousResources.keySet()); //needed for cycle detection
         Set<Resource> candidates = model.listObjects().toList().stream()
             .filter( RDFNode::isResource )
             .map( RDFNode::asResource )
