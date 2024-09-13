@@ -696,6 +696,7 @@ elements in RDF lists.
   * Bugfix: Handle blank node cycles
   * Bugfix: Ensure constant blank node ordering
   * Bugfix: Set Locale for NumberFormat to US
+  * Change default `subjectOrder` to show `rdfs:Class` after `owl:Ontology`
 * 1.2.11:
   * Bugfix: `rdf:type` is not printed as `a` when used as an object
   * Update all dependencies, including Apache Jena to 4.10.0
