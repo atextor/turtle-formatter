@@ -692,8 +692,8 @@ elements in RDF lists.
 
 ## Release Notes
 * 1.2.12:
-  * Bugfix: Handle RDF lists that start with a non-anonymous node   
-  * Bugfix: Handle blank node cycles 
+  * Bugfix: Handle RDF lists that start with a non-anonymous node
+  * Bugfix: Handle blank node cycles
   * Bugfix: Ensure constant blank node ordering
   * Bugfix: Set Locale for NumberFormat to US
 * 1.2.11:
