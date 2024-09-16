@@ -1035,6 +1035,38 @@ public class TurtleFormatterTest {
         assertThat(result.trim()).isEqualTo(modelString);
     }
 
+    @Test
+    public void testDoubleFormatDefault() {
+        final String modelString = """
+                       @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                       @prefix ex: <http://example.com/ns#> .
+                        
+                       ex:something ex:decimalProp 0.0000000006241509074460762607776240980930446 ;
+                         ex:doubleProp 6.241509074460762607776240980930446E-10 .""";
+
+        final FormattingStyle style = FormattingStyle.builder().build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.applyToContent( modelString );
+        assertThat(result.trim()).isEqualTo(modelString);
+    }
+
+    @Test
+    public void testDoubleFormat() {
+        final String modelString = """
+                       @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                       @prefix ex: <http://example.com/ns#> .
+                        
+                       ex:something ex:decimalProp 0.0000000006241509074460762607776240980930446 ;
+                         ex:doubleProp 6.2415E-10 .""";
+
+        final FormattingStyle style = FormattingStyle.builder().skipDoubleFormatting(false).build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.applyToContent( modelString );
+        assertThat(result.trim()).isEqualTo(modelString);
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
