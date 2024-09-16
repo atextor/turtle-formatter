@@ -626,8 +626,12 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private State writeLiteral( final Literal literal, final State state ) {
         String datatypeUri = literal.getDatatypeURI();
-        if (style.skipDoubleFormatting && datatypeUri.equals(XSD.xdouble.getURI())){
+        if (datatypeUri.equals(XSD.xdouble.getURI())) {
+            if (style.enableDoubleFormatting){
+                return state.write(style.doubleFormat.format(literal.getDouble()));
+            } else {
                 return state.write(literal.getLexicalForm());
+            }
         } else {
             if (datatypeUri.equals(XSD.xboolean.getURI())) {
                 return state.write(literal.getBoolean() ? "true" : "false");
@@ -640,9 +644,6 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             }
             if (datatypeUri.equals(XSD.integer.getURI())) {
                 return state.write(literal.getValue().toString());
-            }
-            if (datatypeUri.equals(XSD.xdouble.getURI())) {
-                return state.write(style.doubleFormat.format(literal.getDouble()));
             }
             if (datatypeUri.equals(RDF.langString.getURI())) {
                 return state.write(quoteAndEscape(literal) + "@" + literal.getLanguage());

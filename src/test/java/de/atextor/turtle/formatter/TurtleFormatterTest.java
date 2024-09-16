@@ -6,7 +6,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1020,7 +1019,7 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    public void testSkipFormattingValueOfPredicate() {
+    public void testEnableDoubleFormatting() {
         final String modelString = """
                        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
                        @prefix ex: <http://example.com/ns#> .
@@ -1028,7 +1027,7 @@ public class TurtleFormatterTest {
                        ex:something ex:decimalProp 0.0000000006241509074460762607776240980930446 ;
                          ex:doubleProp 6.241509074460762607776240980930446E-10 .""";
 
-        final FormattingStyle style = FormattingStyle.builder().skipDoubleFormatting(true).build();
+        final FormattingStyle style = FormattingStyle.builder().enableDoubleFormatting(false).build();
 
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.applyToContent( modelString );
@@ -1036,7 +1035,7 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    public void testDoubleFormatDefault() {
+    public void testDoubleFormattingDefault() {
         final String modelString = """
                        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
                        @prefix ex: <http://example.com/ns#> .
@@ -1052,7 +1051,7 @@ public class TurtleFormatterTest {
     }
 
     @Test
-    public void testDoubleFormat() {
+    public void testDisableDoubleFormatting() {
         final String modelString = """
                        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
                        @prefix ex: <http://example.com/ns#> .
@@ -1060,7 +1059,7 @@ public class TurtleFormatterTest {
                        ex:something ex:decimalProp 0.0000000006241509074460762607776240980930446 ;
                          ex:doubleProp 6.2415E-10 .""";
 
-        final FormattingStyle style = FormattingStyle.builder().skipDoubleFormatting(false).build();
+        final FormattingStyle style = FormattingStyle.builder().enableDoubleFormatting(true).build();
 
         final TurtleFormatter formatter = new TurtleFormatter( style );
         final String result = formatter.applyToContent( modelString );

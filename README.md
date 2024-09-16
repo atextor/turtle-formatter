@@ -302,7 +302,7 @@ One of `LATIN1`, `UTF_16_BE`, `UTF_16_LE`, `UTF_8`, `UTF_8_BOM`
 </td>
 <td>
 
-A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/NumberFormat.html) that describes how `xsd:double` literals are formatted
+A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/NumberFormat.html) that describes how `xsd:double` literals are formatted if `enableDoubleFormatting` is `true`.
 
 </td>
 <td>
@@ -314,12 +314,12 @@ A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <tr>
 <td>
 
-`skipDoubleFormatting`
+`enableDoubleFormatting`
 
 </td>
 <td>
 
-Allows for suppressing double formatting
+Enables formatting of `xsd:double` values (see `doubleFormat` option)
 
 </td>
 <td>
