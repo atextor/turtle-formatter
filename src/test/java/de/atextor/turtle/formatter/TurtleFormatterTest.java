@@ -1,25 +1,13 @@
 package de.atextor.turtle.formatter;
 
-import org.apache.jena.atlas.io.AWriter;
-import org.apache.jena.atlas.io.IO;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFParser;
-import org.apache.jena.riot.lang.LabelToNode;
-import org.apache.jena.riot.out.NodeFormatter;
-import org.apache.jena.riot.out.NodeFormatterNT;
-import org.apache.jena.riot.system.StreamRDF;
-import org.apache.jena.riot.system.StreamRDFOps;
-import org.apache.jena.riot.writer.StreamWriterTriX;
-import org.apache.jena.riot.writer.WriterStreamRDFPlain;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,7 +16,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -1032,6 +1019,22 @@ public class TurtleFormatterTest {
         }
     }
 
+    @Test
+    public void testSkipFormattingValueOfPredicate() {
+        final String modelString = """
+                       @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                       @prefix ex: <http://example.com/ns#> .
+                        
+                       ex:something ex:decimalProp 0.0000000006241509074460762607776240980930446 ;
+                         ex:doubleProp 6.241509074460762607776240980930446E-10 .""";
+
+        final FormattingStyle style = FormattingStyle.builder().skipDoubleFormatting(true).build();
+
+        final TurtleFormatter formatter = new TurtleFormatter( style );
+        final String result = formatter.applyToContent( modelString );
+        assertThat(result.trim()).isEqualTo(modelString);
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
@@ -1047,4 +1050,6 @@ public class TurtleFormatterTest {
         model.setNsPrefix( "abcdef", "http://example.com/abc" );
         return model;
     }
+
+
 }

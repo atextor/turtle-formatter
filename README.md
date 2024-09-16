@@ -311,6 +311,23 @@ A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 
 </td>
 </tr>
+<tr>
+<td>
+
+`skipDoubleFormatting`
+
+</td>
+<td>
+
+Allows for suppressing double formatting
+
+</td>
+<td>
+
+`false`
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -691,6 +708,8 @@ elements in RDF lists.
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
 ## Release Notes
+* 1.2.13: 
+  * Feature: Skip double formatting
 * 1.2.12:
   * Bugfix: Handle RDF lists that start with a non-anonymous node
   * Bugfix: Handle blank node cycles
