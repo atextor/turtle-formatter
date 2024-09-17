@@ -632,25 +632,24 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             } else {
                 return state.write(literal.getLexicalForm());
             }
-        } else {
-            if (datatypeUri.equals(XSD.xboolean.getURI())) {
-                return state.write(literal.getBoolean() ? "true" : "false");
-            }
-            if (datatypeUri.equals(XSD.xstring.getURI())) {
-                return state.write(quoteAndEscape(literal));
-            }
-            if (datatypeUri.equals(XSD.decimal.getURI())) {
-                return state.write(literal.getLexicalForm());
-            }
-            if (datatypeUri.equals(XSD.integer.getURI())) {
-                return state.write(literal.getValue().toString());
-            }
-            if (datatypeUri.equals(RDF.langString.getURI())) {
-                return state.write(quoteAndEscape(literal) + "@" + literal.getLanguage());
-            }
+        }
+        if (datatypeUri.equals(XSD.xboolean.getURI())) {
+            return state.write(literal.getBoolean() ? "true" : "false");
+        }
+        if (datatypeUri.equals(XSD.xstring.getURI())) {
+            return state.write(quoteAndEscape(literal));
+        }
+        if (datatypeUri.equals(XSD.decimal.getURI())) {
+            return state.write(literal.getLexicalForm());
+        }
+        if (datatypeUri.equals(XSD.integer.getURI())) {
+            return state.write(literal.getValue().toString());
+        }
+        if (datatypeUri.equals(RDF.langString.getURI())) {
+            return state.write(quoteAndEscape(literal) + "@" + literal.getLanguage());
         }
 
-        final Resource typeResource = ResourceFactory.createResource( literal.getDatatypeURI() );
+        final Resource typeResource = ResourceFactory.createResource( datatypeUri );
         final State literalWritten = state.write( quoteAndEscape( literal ) + "^^" );
         return writeUriResource( typeResource, literalWritten );
     }
@@ -960,17 +959,5 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             }
             return withLastCharacter( end ).withAlignment( alignment + content.length() );
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        System.out.println(Arrays.stream(args).collect(Collectors.joining("\n")));
-        if (args.length != 1){
-            throw new IllegalArgumentException("usage: TurtleFormatter <file>");
-        }
-        String filename = args[0];
-        String content = Files.readString(Path.of(filename), StandardCharsets.UTF_8);
-        final FormattingStyle style = FormattingStyle.builder().alignPredicates(true).alignObjects(true).build();
-        final TurtleFormatter formatter = new TurtleFormatter(style);
-        System.out.println(formatter.applyToContent(content));
     }
 }
