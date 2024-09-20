@@ -31,6 +31,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -622,26 +625,31 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeLiteral( final Literal literal, final State state ) {
-        if ( literal.getDatatypeURI().equals( XSD.xboolean.getURI() ) ) {
-            return state.write( literal.getBoolean() ? "true" : "false" );
+        String datatypeUri = literal.getDatatypeURI();
+        if (datatypeUri.equals(XSD.xdouble.getURI())) {
+            if (style.enableDoubleFormatting){
+                return state.write(style.doubleFormat.format(literal.getDouble()));
+            } else {
+                return state.write(literal.getLexicalForm());
+            }
         }
-        if ( literal.getDatatypeURI().equals( XSD.xstring.getURI() ) ) {
-            return state.write( quoteAndEscape( literal ) );
+        if (datatypeUri.equals(XSD.xboolean.getURI())) {
+            return state.write(literal.getBoolean() ? "true" : "false");
         }
-        if ( literal.getDatatypeURI().equals( XSD.decimal.getURI() ) ) {
-            return state.write( literal.getLexicalForm() );
+        if (datatypeUri.equals(XSD.xstring.getURI())) {
+            return state.write(quoteAndEscape(literal));
         }
-        if ( literal.getDatatypeURI().equals( XSD.integer.getURI() ) ) {
-            return state.write( literal.getValue().toString() );
+        if (datatypeUri.equals(XSD.decimal.getURI())) {
+            return state.write(literal.getLexicalForm());
         }
-        if ( literal.getDatatypeURI().equals( XSD.xdouble.getURI() ) ) {
-            return state.write( style.doubleFormat.format( literal.getDouble() ) );
+        if (datatypeUri.equals(XSD.integer.getURI())) {
+            return state.write(literal.getValue().toString());
         }
-        if ( literal.getDatatypeURI().equals( RDF.langString.getURI() ) ) {
-            return state.write( quoteAndEscape( literal ) + "@" + literal.getLanguage() );
+        if (datatypeUri.equals(RDF.langString.getURI())) {
+            return state.write(quoteAndEscape(literal) + "@" + literal.getLanguage());
         }
 
-        final Resource typeResource = ResourceFactory.createResource( literal.getDatatypeURI() );
+        final Resource typeResource = ResourceFactory.createResource( datatypeUri );
         final State literalWritten = state.write( quoteAndEscape( literal ) + "^^" );
         return writeUriResource( typeResource, literalWritten );
     }

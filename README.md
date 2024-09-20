@@ -302,12 +302,29 @@ One of `LATIN1`, `UTF_16_BE`, `UTF_16_LE`, `UTF_8`, `UTF_8_BOM`
 </td>
 <td>
 
-A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/NumberFormat.html) that describes how `xsd:double` literals are formatted
+A [NumberFormat](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/NumberFormat.html) that describes how `xsd:double` literals are formatted if `enableDoubleFormatting` is `true`.
 
 </td>
 <td>
 
 `0.####E0`
+
+</td>
+</tr>
+<tr>
+<td>
+
+`enableDoubleFormatting`
+
+</td>
+<td>
+
+Enables formatting of `xsd:double` values (see `doubleFormat` option)
+
+</td>
+<td>
+
+`false`
 
 </td>
 </tr>
@@ -691,6 +708,8 @@ elements in RDF lists.
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
 ## Release Notes
+* 1.2.13: 
+  * Feature: Skip double formatting
 * 1.2.12:
   * Bugfix: Handle RDF lists that start with a non-anonymous node
   * Bugfix: Handle blank node cycles

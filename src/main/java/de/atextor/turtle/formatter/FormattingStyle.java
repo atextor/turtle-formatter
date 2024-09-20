@@ -107,6 +107,9 @@ public class FormattingStyle {
     public NumberFormat doubleFormat = new DecimalFormat("0.####E0" , DecimalFormatSymbols.getInstance(Locale.US));
 
     @Builder.Default
+    public boolean enableDoubleFormatting = false;
+
+    @Builder.Default
     public EndOfLineStyle endOfLine = EndOfLineStyle.LF;
 
     @Builder.Default
