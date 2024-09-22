@@ -640,7 +640,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return state.write( literal.getLexicalForm() );
         }
         if ( datatypeUri.equals( XSD.integer.getURI() ) ) {
-            return state.write( literal.getValue().toString() );
+            return state.write( literal.getLexicalForm() );
         }
         if ( datatypeUri.equals( RDF.langString.getURI() ) ) {
             return state.write( quoteAndEscape( literal ) + "@" + literal.getLanguage() );
