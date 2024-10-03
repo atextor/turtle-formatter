@@ -1066,6 +1066,24 @@ public class TurtleFormatterTest {
         assertThat(result.trim()).isEqualTo(modelString);
     }
 
+    @Test
+    public void testIntegerLiteralWithLeadingZeros(){
+        String content =   """
+           @prefix : <http://example.com/ns#> .
+           :thing :value 060.
+           
+           """;
+        String expected = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/ns#> .
+            
+            :thing :value 060 .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
