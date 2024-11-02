@@ -1084,6 +1084,79 @@ public class TurtleFormatterTest {
         assertThat(result.trim()).isEqualTo(expected);
     }
 
+    @Test
+    public void testDoubleLiteralWithoutFractions(){
+        String content =   """
+           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+           @prefix : <http://example.com/ns#> .
+           :thing :value "40"^^xsd:double.
+           """;
+        String expected = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/ns#> .
+            
+            :thing :value "40"^^xsd:double .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+    @Test
+    public void testDoubleLiteralWithFractions(){
+        String content =   """
+           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+           @prefix : <http://example.com/ns#> .
+           :thing :value "4.001E2"^^xsd:double.
+           """;
+        String expected = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/ns#> .
+            
+            :thing :value 4.001E2 .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+    @Test
+    public void testDecimalLiteralWithoutFractions(){
+        String content =   """
+           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+           @prefix : <http://example.com/ns#> .
+           :thing :value "40"^^xsd:decimal.
+           """;
+        String expected = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/ns#> .
+            
+            :thing :value "40"^^xsd:decimal .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+    @Test
+    public void testDecimalLiteralWithFractions(){
+        String content =   """
+           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+           @prefix : <http://example.com/ns#> .
+           :thing :value "40.0001"^^xsd:decimal.
+           """;
+        String expected = """
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix : <http://example.com/ns#> .
+            
+            :thing :value 40.0001 .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
