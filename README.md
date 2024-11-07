@@ -9,7 +9,7 @@ It takes as input a formatting style and an [Apache Jena](https://jena.apache.or
 produces as output a pretty-printed RDF/Turtle document.
 
 Starting from version 1.2.0, turtle-formatter is licensed under Apache 2.0. The
-current version is 1.2.13.
+current version is 1.2.14.
 
 **Current Status**: The library is feature-complete.
 
@@ -126,13 +126,13 @@ Add the following dependency to your Maven `pom.xml`:
 <dependency>
   <groupId>de.atextor</groupId>
   <artifactId>turtle-formatter</artifactId>
-  <version>1.2.13</version>
+  <version>1.2.14</version>
 </dependency>
 ```
 
-Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.13'`
+Gradle/Groovy: `implementation 'de.atextor:turtle-formatter:1.2.14'`
 
-Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.13")`
+Gradle/Kotlin: `implementation("de.atextor:turtle-formatter:1.2.14")`
 
 ### Calling the formatter
 
@@ -708,6 +708,9 @@ elements in RDF lists.
 \* Adapted from [EditorConfig](https://editorconfig.org/#file-format-details)
 
 ## Release Notes
+* 1.2.14:
+  * Bugfix: xsd:double numbers are correctly typed even when lexically
+    equivalent to decimals
 * 1.2.13: 
   * Feature: Skip double formatting
 * 1.2.12:
