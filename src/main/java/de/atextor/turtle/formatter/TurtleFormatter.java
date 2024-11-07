@@ -54,9 +54,10 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
 
     private static final Logger LOG = LoggerFactory.getLogger( TurtleFormatter.class );
 
-    private static final Pattern XSD_DECIMAL_UNQUOTED_REGEX = Pattern.compile("[+-]?\\d*\\.\\d+");
+    private static final Pattern XSD_DECIMAL_UNQUOTED_REGEX = Pattern.compile( "[+-]?\\d*\\.\\d+" );
 
-    private static final Pattern XSD_DOUBLE_UNQUOTED_REGEX = Pattern.compile("(([+-]?\\d+\\.\\d+)|([+-]?\\.\\d+)|([+-]?\\d+))[eE][+-]?\\d+");
+    private static final Pattern XSD_DOUBLE_UNQUOTED_REGEX = Pattern.compile( "(([+-]?\\d+\\.\\d+)|([+-]?\\.\\d+)|" +
+        "([+-]?\\d+))[eE][+-]?\\d+" );
 
     /**
      * String escape sequences as described in <a href="https://www.w3.org/TR/turtle/#sec-escapes">Escape Sequences</a>.
@@ -87,7 +88,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             case LF -> "\n";
             case CRLF -> "\r\n";
         };
-       
+
         beforeDot = switch ( style.beforeDot ) {
             case SPACE -> " ";
             case NOTHING -> "";
@@ -630,7 +631,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         if ( datatypeUri.equals( XSD.xdouble.getURI() ) ) {
             if ( style.enableDoubleFormatting ) {
                 return state.write( style.doubleFormat.format( literal.getDouble() ) );
-            } else if (XSD_DOUBLE_UNQUOTED_REGEX.matcher(literal.getLexicalForm()).matches()) {
+            } else if ( XSD_DOUBLE_UNQUOTED_REGEX.matcher( literal.getLexicalForm() ).matches() ) {
                 // only use unquoted form if it will be parsed as an xsd:double
                 return state.write( literal.getLexicalForm() );
             }
@@ -642,9 +643,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return state.write( quoteAndEscape( literal ) );
         }
         if ( datatypeUri.equals( XSD.decimal.getURI() ) ) {
-            if (XSD_DECIMAL_UNQUOTED_REGEX.matcher(literal.getLexicalForm()).matches()) {
+            if ( XSD_DECIMAL_UNQUOTED_REGEX.matcher( literal.getLexicalForm() ).matches() ) {
                 // only use unquoted form if it will be parsed as an xsd:decimal
-                return state.write(literal.getLexicalForm());
+                return state.write( literal.getLexicalForm() );
             }
         }
         if ( datatypeUri.equals( XSD.integer.getURI() ) ) {
