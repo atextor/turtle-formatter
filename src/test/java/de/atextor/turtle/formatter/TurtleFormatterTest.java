@@ -1157,6 +1157,38 @@ public class TurtleFormatterTest {
     }
 
 
+    @Test
+    public void testListNodeWithAdditionalTriples(){
+        String content = """
+            @prefix : <http://example.com/ns#> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            :thing :hasList  [
+                a :SomeListClass ;
+                a rdf:List ;
+                :comment "a very special list";
+                rdf:first 1 ;
+                rdf:rest ( 2 3 4 );
+            ] .
+            """;
+        String expected = """
+           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+           @prefix : <http://example.com/ns#> .
+        
+           :thing :hasList [
+               a :SomeListClass, rdf:List ;
+               :comment "a very special list" ;
+               rdf:first 1 ;
+               rdf:rest ( 2 3 4 ) ;
+             ] .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
+
+
+
     private Model modelFromString( final String content ) {
         final Model model = ModelFactory.createDefaultModel();
         final InputStream stream = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ) );
