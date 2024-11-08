@@ -468,8 +468,20 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private boolean isList( final RDFNode node, final State state ) {
-        return node.equals( RDF.nil ) ||
-            ( node.isAnon() && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
+        if (!node.isResource()){
+            return false;
+        }
+        boolean listNodeHasAdditionalTriples = state.model.listStatements(node.asResource(), null, (RDFNode) null)
+                .toList()
+                .stream()
+                .map(Statement::getPredicate)
+                .filter(p -> ! p.equals(RDF.first))
+                .anyMatch(p -> ! p.equals(RDF.rest));
+        if (listNodeHasAdditionalTriples){
+            return false;
+        }
+        return ( node.isAnon()
+                        && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
     }
 
     private State writeResource( final Resource resource, final State state ) {
