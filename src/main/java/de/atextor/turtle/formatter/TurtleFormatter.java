@@ -468,20 +468,20 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private boolean isList( final RDFNode node, final State state ) {
-        if (!node.isResource()){
+        if ( !node.isResource() ) {
             return false;
         }
-        boolean listNodeHasAdditionalTriples = state.model.listStatements(node.asResource(), null, (RDFNode) null)
-                .toList()
-                .stream()
-                .map(Statement::getPredicate)
-                .filter(p -> ! p.equals(RDF.first))
-                .anyMatch(p -> ! p.equals(RDF.rest));
-        if (listNodeHasAdditionalTriples){
+        final boolean listNodeHasAdditionalTriples = state.model.listStatements( node.asResource(), null, (RDFNode) null )
+            .toList()
+            .stream()
+            .map( Statement::getPredicate )
+            .filter( p -> !p.equals( RDF.first ) )
+            .anyMatch( p -> !p.equals( RDF.rest ) );
+        if ( listNodeHasAdditionalTriples ) {
             return false;
         }
         return ( node.isAnon()
-                        && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
+            && state.model.contains( node.asResource(), RDF.rest, (RDFNode) null ) );
     }
 
     private State writeResource( final Resource resource, final State state ) {
@@ -639,7 +639,7 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
     }
 
     private State writeLiteral( final Literal literal, final State state ) {
-        String datatypeUri = literal.getDatatypeURI();
+        final String datatypeUri = literal.getDatatypeURI();
         if ( datatypeUri.equals( XSD.xdouble.getURI() ) ) {
             if ( style.enableDoubleFormatting ) {
                 return state.write( style.doubleFormat.format( literal.getDouble() ) );
