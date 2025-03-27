@@ -1187,6 +1187,48 @@ public class TurtleFormatterTest {
         assertThat(result.trim()).isEqualTo(expected);
     }
 
+    @Test
+    public void testEmptyList() {
+        var content =   """
+           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+           @prefix : <http://example.com/ns#> .
+           :aThing a :element;
+            :has ();
+            :hasNil rdf:nil;
+            :numbers (1 2 3 );
+            :tests  ();
+            :hasList  [
+                 a :SomeListClass ;
+                 a rdf:List ;
+                 :numbersAgain ();
+                 :comment "a very special list";
+                 rdf:first 1 ;
+                 rdf:rest ( 2 3 4 )
+            ].
+           """;
+
+        final String expected = """
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              @prefix : <http://example.com/ns#> .
+ 
+              :aThing a :element ;
+                :has ( ) ;
+                :hasList [
+                  a :SomeListClass, rdf:List ;
+                  :comment "a very special list" ;
+                  :numbersAgain ( ) ;
+                  rdf:first 1 ;
+                  rdf:rest ( 2 3 4 ) ;
+                ] ;
+                :hasNil ( ) ;
+                :numbers ( 1 2 3 ) ;
+                :tests ( ) .""";
+        final FormattingStyle style = FormattingStyle.DEFAULT;
+        final TurtleFormatter formatter = new TurtleFormatter(style);
+        final String result = formatter.applyToContent(content);
+        assertThat(result.trim()).isEqualTo(expected);
+    }
 
 
     private Model modelFromString( final String content ) {

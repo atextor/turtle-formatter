@@ -489,9 +489,16 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return writeList( resource, state );
         }
         if ( resource.isURIResource() ) {
+            if(resource.equals( RDF.nil )) {
+                return writeNil(resource, state);
+            }
             return writeUriResource( resource, state );
         }
         return writeAnonymousResource( resource, state );
+    }
+
+    private State writeNil(Resource resource, State state) {
+        return state.write( "( )");
     }
 
     private State writeList( final Resource resource, final State state ) {
