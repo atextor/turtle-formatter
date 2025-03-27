@@ -471,6 +471,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         if ( !node.isResource() ) {
             return false;
         }
+        if( node.equals( RDF.nil ) ) {
+            return true;
+        }
         final boolean listNodeHasAdditionalTriples = state.model.listStatements( node.asResource(), null, (RDFNode) null )
             .toList()
             .stream()
@@ -489,16 +492,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
             return writeList( resource, state );
         }
         if ( resource.isURIResource() ) {
-            if(resource.equals( RDF.nil )) {
-                return writeNil(resource, state);
-            }
             return writeUriResource( resource, state );
         }
         return writeAnonymousResource( resource, state );
-    }
-
-    private State writeNil(Resource resource, State state) {
-        return state.write( "( )");
     }
 
     private State writeList( final Resource resource, final State state ) {
