@@ -471,6 +471,9 @@ public class TurtleFormatter implements Function<Model, String>, BiConsumer<Mode
         if ( !node.isResource() ) {
             return false;
         }
+        if( node.equals( RDF.nil ) ) {
+            return true;
+        }
         final boolean listNodeHasAdditionalTriples = state.model.listStatements( node.asResource(), null, (RDFNode) null )
             .toList()
             .stream()
