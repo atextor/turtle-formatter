@@ -2,6 +2,14 @@
 
 [![build](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml/badge.svg)](https://github.com/atextor/turtle-formatter/actions/workflows/build.yml) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.atextor/turtle-formatter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.atextor/turtle-formatter) [![codecov](https://codecov.io/gh/atextor/turtle-formatter/branch/main/graph/badge.svg?token=X2YFDI4Z4W)](https://codecov.io/gh/atextor/turtle-formatter) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
+> [!IMPORTANT]
+> This project has been archived. Its contents were merged into the [Cool
+> RDF](https://github.com/cool-rdf/cool-rdf) project, where it is continued to
+> be developed as `cool-rdf-formatter`.
+>
+> Installation instructions and the usage guide can be found at [https://rdf.cool/cool-rdf/](https://rdf.cool/cool-rdf/).
+> Specific information for migration can be found at [Legacy Projects](https://rdf.cool/cool-rdf/release-notes.adoc#legacy-projects).
+
 **turtle-formatter** is a Java library for pretty printing
 [RDF/Turtle](https://www.w3.org/TR/turtle/) documents in a _configurable_ and _reproducible_ way.
 
