@@ -5,6 +5,8 @@
 > RDF](https://github.com/cool-rdf/cool-rdf) project, where it is continued to
 > be developed as `cool-rdf-formatter`.
 >
+> Open issues have been moved and can be found using a [filter](https://github.com/cool-rdf/cool-rdf/issues?q=is%3Aissue%20state%3Aopen%20label%3Ardf-formatter).
+>
 > Installation instructions and the usage guide can be found at [https://rdf.cool/cool-rdf/](https://rdf.cool/cool-rdf/).
 > Specific information for migration can be found at [Legacy Projects](https://rdf.cool/cool-rdf/release-notes.adoc#legacy-projects).
 
